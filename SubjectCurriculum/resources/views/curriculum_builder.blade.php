@@ -19,15 +19,8 @@
                 <h2 class="text-xl font-bold text-gray-700 mb-6">Existing Curriculums</h2>
                 
                 <div id="curriculumsContainer" class="space-y-4">
-                    {{-- Existing items will be here --}}
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow">
-                        <div>
-                            <h3 class="text-md font-bold text-gray-900">Bachelor of Science and Information Technology</h3>
-                            <p class="text-sm text-gray-500">Curriculum Code: <span class="font-semibold text-gray-700">BSIT</span></p>
-                            <p class="text-sm text-gray-500">Academic Year: <span class="font-semibold text-gray-700">2025-2026</span></p>
-                        </div>
-                        {{-- Delete Button has been removed from here --}}
-                    </div>
+                    {{-- Existing curriculums will be dynamically loaded here --}}
+                    <p class="text-gray-500">Loading curriculums...</p>
                 </div>
             </div>
             
@@ -45,7 +38,8 @@
                             </button>
                         </div>
                         
-                        <form id="curriculumForm" class="space-y-6">
+                        <form id="curriculumForm" action="{{ route('curriculum_builder.store') }}" method="POST" class="space-y-6">
+                            @csrf
                             <div>
                                 <label for="curriculumName" class="block text-sm font-semibold text-gray-700 mb-1">Curriculum Name</label>
                                 <input type="text" id="curriculumName" name="curriculumName" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"  required>
@@ -78,7 +72,6 @@
                     </div>
                 </div>
             </div>
-            
         </div>
     </main>
     
@@ -90,8 +83,56 @@
             const closeModalButton = document.getElementById('closeModalButton');
             const cancelModalButton = document.getElementById('cancelModalButton');
             const modalPanel = document.getElementById('modal-panel');
-            const curriculumForm = document.getElementById('curriculumForm');
             const curriculumsContainer = document.getElementById('curriculumsContainer');
+
+            // Function to fetch and render existing curriculums
+            const fetchCurriculums = () => {
+                fetch('/api/curriculums')
+                    .then(response => response.json())
+                    .then(curriculums => {
+                        curriculumsContainer.innerHTML = ''; // Clear previous content
+                        if (curriculums.length === 0) {
+                            curriculumsContainer.innerHTML = '<p class="text-gray-500">No curriculums found. Add a new one to get started.</p>';
+                        } else {
+                            curriculums.forEach(curriculum => {
+                                const curriculumCard = document.createElement('div');
+                                curriculumCard.classList.add(
+                                    'bg-white',
+                                    'p-4',
+                                    'rounded-xl',
+                                    'border',
+                                    'border-gray-200',
+                                    'shadow-sm',
+                                    'flex',
+                                    'justify-between',
+                                    'items-center',
+                                    'hover:shadow-md',
+                                    'transition-shadow'
+                                );
+                                // Add an event listener to click the card and navigate
+                                curriculumCard.addEventListener('click', () => {
+                                    window.location.href = `/subject_mapping?curriculumId=${curriculum.id}`;
+                                });
+
+                                curriculumCard.innerHTML = `
+                                    <div>
+                                        <h3 class="text-md font-bold text-gray-900">${curriculum.curriculum_name}</h3>
+                                        <p class="text-sm text-gray-500">Curriculum Code: <span class="font-semibold text-gray-700">${curriculum.curriculum_code}</span></p>
+                                        <p class="text-sm text-gray-500">Academic Year: <span class="font-semibold text-gray-700">${curriculum.academic_year}</span></p>
+                                    </div>
+                                `;
+                                curriculumsContainer.appendChild(curriculumCard);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching curriculums:', error);
+                        curriculumsContainer.innerHTML = '<p class="text-red-500">Failed to load curriculums. Please try again later.</p>';
+                    });
+            };
+
+            // Call the fetch function on page load
+            fetchCurriculums();
 
             // Function to show the modal with animation
             const showModal = () => {
@@ -108,6 +149,7 @@
                 modalPanel.classList.add('opacity-0', 'scale-95');
                 setTimeout(() => {
                     addCurriculumModal.classList.add('hidden');
+                    document.getElementById('curriculumForm').reset();
                 }, 300);
             };
 
@@ -121,49 +163,6 @@
                 if (e.target.id === 'addCurriculumModal') {
                     hideModal();
                 }
-            });
-
-            // Form submission logic
-            curriculumForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                // Get form data
-                const curriculumName = document.getElementById('curriculumName').value;
-                const curriculumCode = document.getElementById('curriculumCode').value;
-                const academicYear = document.getElementById('academicYear').value;
-                const yearLevel = document.getElementById('yearLevel').value; // Still captured but not used in the card title
-
-                // Create a new curriculum card element
-                const newCurriculumCard = document.createElement('div');
-                newCurriculumCard.classList.add(
-                    'bg-white',
-                    'p-4',
-                    'rounded-xl',
-                    'border',
-                    'border-gray-200',
-                    'shadow-sm',
-                    'flex',
-                    'justify-between',
-                    'items-center',
-                    'hover:shadow-md',
-                    'transition-shadow'
-                );
-
-                // MODIFIED: Updated innerHTML to hide the year level from the title
-                newCurriculumCard.innerHTML = `
-                    <div>
-                        <h3 class="text-md font-bold text-gray-900">${curriculumName}</h3>
-                        <p class="text-sm text-gray-500">Curriculum Code: <span class="font-semibold text-gray-700">${curriculumCode}</span></p>
-                        <p class="text-sm text-gray-500">Academic Year: <span class="font-semibold text-gray-700">${academicYear}</span></p>
-                    </div>
-                `;
-
-                // Add the new card to the container
-                curriculumsContainer.appendChild(newCurriculumCard);
-
-                // Hide the modal and reset the form
-                hideModal();
-                curriculumForm.reset();
             });
         });
     </script>

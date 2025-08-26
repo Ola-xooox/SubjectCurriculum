@@ -1,20 +1,27 @@
 <?php
 
+use App\Http\Controllers\CurriculumController;
 use Illuminate\Support\Facades\Route;
 
-// This route now points the root URL ('/') to your dashboard view.
 Route::get('/', function () {
     return view('dashboard');
 })->name('dashboard');
 
-// Keep your other routes as they were.
 Route::get('/curriculum_builder', function () {
     return view('curriculum_builder');
 })->name('curriculum_builder');
 
+// Route for creating a new curriculum
+Route::post('/curriculum_builder', [CurriculumController::class, 'store'])->name('curriculum_builder.store');
+
 Route::get('/subject_mapping', function () {
     return view('subject_mapping');
 })->name('subject_mapping');
+
+// API routes for subject mapping
+Route::get('/api/curriculums', [CurriculumController::class, 'getCurriculums'])->name('api.curriculums');
+Route::get('/api/curriculums/{id}', [CurriculumController::class, 'getCurriculumData']);
+Route::post('/api/curriculums/save', [CurriculumController::class, 'saveSubjects']);
 
 Route::get('/pre_requisite', function () {
     return view('pre_requisite');
@@ -35,5 +42,3 @@ Route::get('/equivalency_tool', function () {
 Route::get('/subject_history', function () {
     return view('subject_history');
 })->name('subject_history');
-
-
