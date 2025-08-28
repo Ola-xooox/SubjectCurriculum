@@ -109,12 +109,12 @@
                     
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-semibold text-gray-700">Lesson per Week</h3>
-                            <button type="button" id="generateLessonPlanButton" class="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
-                                AI Generate
+                            <h3 class="text-sm font-semibold text-gray-700">Weekly Topics</h3>
+                            <button type="button" id="generateTopicsButton" class="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                                AI Topic Generator
                             </button>
                         </div>
-                         <div id="lessonPlanSpinner" class="hidden text-center py-4">
+                         <div id="topicSpinner" class="hidden text-center py-4">
                             <div role="status">
                                 <svg aria-hidden="true" class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
@@ -122,7 +122,7 @@
                                 </svg>
                                 <span class="sr-only">Loading...</span>
                             </div>
-                            <p class="text-sm text-gray-500 mt-2">Generating lesson plan, please wait...</p>
+                            <p class="text-sm text-gray-500 mt-2">Generating weekly topics, please wait...</p>
                         </div>
                         @for ($i = 1; $i <= 15; $i++)
                         <div>
@@ -130,8 +130,16 @@
                                 <span class="font-medium text-gray-700">Week {{ $i }}</span>
                                 <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
-                            <div class="week-input hidden mt-2">
-                                <textarea id="week-{{ $i }}-lessons" name="week-{{ $i }}-lessons" class="w-full h-24 p-3 border border-gray-300 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-mono text-sm" style="min-height: 5rem;"></textarea>
+                            <div class="week-content hidden mt-2 p-3 border border-gray-200 rounded-lg">
+                                <textarea id="week-{{ $i }}-lessons" name="week-{{ $i }}-lessons" class="w-full h-24 p-3 border border-gray-300 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-mono text-sm" style="min-height: 5rem;" placeholder="Topic for Week {{ $i }}..."></textarea>
+                                <div class="flex justify-end mt-2">
+                                    <button type="button" class="generate-lesson-btn px-3 py-1.5 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors" data-week="{{ $i }}">
+                                        Generate Detailed Lesson
+                                    </button>
+                                </div>
+                                <div id="lesson-spinner-{{ $i }}" class="hidden text-center py-2">
+                                    <p class="text-xs text-gray-500">Generating detailed lesson...</p>
+                                </div>
                             </div>
                         </div>
                         @endfor
@@ -214,8 +222,8 @@
         const subjectModalPanel = document.getElementById('modal-subject-panel');
         const subjectForm = document.getElementById('subjectForm');
         const availableSubjectsContainer = document.getElementById('availableSubjects');
-        const generateLessonPlanButton = document.getElementById('generateLessonPlanButton');
-        const lessonPlanSpinner = document.getElementById('lessonPlanSpinner');
+        const generateTopicsButton = document.getElementById('generateTopicsButton');
+        const topicSpinner = document.getElementById('topicSpinner');
 
         const showSubjectModal = () => {
             addSubjectModal.classList.remove('hidden');
@@ -231,7 +239,7 @@
             setTimeout(() => {
                 addSubjectModal.classList.add('hidden');
                 subjectForm.reset();
-                document.querySelectorAll('.week-input').forEach(input => {
+                document.querySelectorAll('.week-content').forEach(input => {
                     input.classList.add('hidden');
                 });
                 document.querySelectorAll('.week-toggle-btn svg').forEach(svg => {
@@ -252,10 +260,10 @@
         document.querySelectorAll('.week-toggle-btn').forEach(button => {
             button.addEventListener('click', () => {
                 const parent = button.parentElement;
-                const inputDiv = parent.querySelector('.week-input');
+                const contentDiv = parent.querySelector('.week-content');
                 const svg = button.querySelector('svg');
                 
-                inputDiv.classList.toggle('hidden');
+                contentDiv.classList.toggle('hidden');
                 svg.classList.toggle('rotate-180');
             });
         });
@@ -288,62 +296,120 @@
             hideSubjectModal();
         });
 
-        generateLessonPlanButton.addEventListener('click', () => {
+        generateTopicsButton.addEventListener('click', () => {
             const subjectName = document.getElementById('subjectName').value;
-            const subjectCode = document.getElementById('subjectCode').value;
-            const subjectType = document.getElementById('subjectType').value;
-            const subjectUnit = document.getElementById('subjectUnit').value;
-
-            if (!subjectName || !subjectCode || !subjectType || !subjectUnit) {
-                alert('Please fill in all subject details before generating a lesson plan.');
+            if (!subjectName) {
+                alert('Please enter a Subject Name to generate topics.');
                 return;
             }
 
-            lessonPlanSpinner.classList.remove('hidden');
+            topicSpinner.classList.remove('hidden');
 
-            fetch('{{ route('api.generate_lesson_plan') }}', {
+            fetch('/api/generate-lesson-topics', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
-                body: JSON.stringify({ subjectName, subjectCode, subjectType, subjectUnit })
+                body: JSON.stringify({ subjectName })
             })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw errorData;
-                    });
+                    return response.json().then(errorData => { throw errorData; });
                 }
                 return response.json();
             })
             .then(data => {
+                // data is expected to be an object like {"Week 1": "Topic 1", "Week 2": "Topic 2", ...}
                 for (let i = 1; i <= 15; i++) {
                     const weekKey = `Week ${i}`;
                     const weekTextarea = document.getElementById(`week-${i}-lessons`);
                     if (data[weekKey]) {
-                        // Format the new, more detailed content
-                        const objectives = data[weekKey].learning_objectives.map(obj => `- ${obj}`).join('\n');
-                        weekTextarea.value = `Topic: ${data[weekKey].topic}\n\n` +
-                                           `Learning Objectives:\n${objectives}\n\n` +
-                                           `Lesson Content:\n${data[weekKey].lesson_content}\n\n` +
-                                           `Assessment:\n${data[weekKey].assessment}`;
+                        weekTextarea.value = data[weekKey];
                     }
                 }
             })
             .catch(error => {
-                console.error('Error generating lesson plan:', error);
-                let errorMessage = 'An error occurred while generating the lesson plan.';
-                if (error.error) {
-                    errorMessage = error.error;
-                    if(error.details && error.details.error && error.details.error.message) {
-                        errorMessage += `\nDetails: ${error.details.error.message}`;
-                    }
+                console.error('Error generating topics:', error);
+                let errorMessage = 'An error occurred while generating topics. Check the browser console for more details.';
+                if (error && error.message) {
+                    errorMessage = `Error: ${error.message}`;
                 }
                 alert(errorMessage);
             })
             .finally(() => {
-                lessonPlanSpinner.classList.add('hidden');
+                topicSpinner.classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('.generate-lesson-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const week = e.target.dataset.week;
+                const weekTextarea = document.getElementById(`week-${week}-lessons`);
+                const topic = weekTextarea.value;
+                const subjectName = document.getElementById('subjectName').value;
+
+                if (!topic) {
+                    alert(`Please enter a topic for Week ${week} or generate topics first.`);
+                    return;
+                }
+                 if (!subjectName) {
+                    alert('Please ensure the Subject Name is filled out.');
+                    return;
+                }
+
+                const lessonSpinner = document.getElementById(`lesson-spinner-${week}`);
+                lessonSpinner.classList.remove('hidden');
+
+                fetch('/api/generate-lesson-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ subjectName, topic })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => { throw errorData; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Correctly parse the new detailed structure
+                    const objectives = data.learning_objectives.map(obj => `- ${obj.objective}: ${obj.description}`).join('\n');
+                    
+                    let tableContent = 'Lesson Plan:\n';
+                    tableContent += '--------------------------------------------------\n';
+                    
+                    if (data.lesson_plan_table && Array.isArray(data.lesson_plan_table)) {
+                        data.lesson_plan_table.forEach(row => {
+                            tableContent += `Activity: ${row.activity || 'N/A'}\n`;
+                            tableContent += `Description: ${row.description || 'N/A'}\n`;
+                            tableContent += `Duration (mins): ${row.duration_minutes || 'N/A'}\n`;
+                            tableContent += '--------------------------------------------------\n';
+                        });
+                    }
+
+                    const lessonContent = data.detailed_lesson_content || 'No detailed lesson content was generated.';
+
+                    weekTextarea.value = `Topic: ${data.topic}\n\n` +
+                                       `Learning Objectives:\n${objectives}\n\n` +
+                                       `${tableContent}\n` +
+                                       `Detailed Lesson:\n${lessonContent}\n\n` +
+                                       `Assessment:\n${data.assessment}`;
+                })
+                .catch(error => {
+                    console.error('Error generating detailed lesson:', error);
+                    let errorMessage = 'An error occurred while generating the detailed lesson. Check the browser console for more details.';
+                    if (error && error.message) {
+                        errorMessage = `Error: ${error.message}`;
+                    }
+                    alert(errorMessage);
+                })
+                .finally(() => {
+                    lessonSpinner.classList.add('hidden');
+                });
             });
         });
         
@@ -392,8 +458,8 @@
             if (data.lessons && Object.keys(data.lessons).length > 0) {
                 for (const week in data.lessons) {
                     const lessonDiv = document.createElement('div');
-                    lessonDiv.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'text-sm', 'text-gray-700');
-                    lessonDiv.innerHTML = `<strong>${week}:</strong> ${data.lessons[week]}`;
+                    lessonDiv.classList.add('p-3', 'bg-gray-100', 'rounded-lg', 'text-sm', 'text-gray-700', 'whitespace-pre-wrap');
+                    lessonDiv.innerHTML = `<strong>${week}:</strong>\n${data.lessons[week]}`;
                     lessonsContainer.appendChild(lessonDiv);
                 }
             } else {

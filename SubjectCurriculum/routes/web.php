@@ -23,6 +23,9 @@ Route::get('/api/curriculums', [CurriculumController::class, 'getCurriculums'])-
 Route::get('/api/curriculums/{id}', [CurriculumController::class, 'getCurriculumData']);
 Route::post('/api/curriculums/save', [CurriculumController::class, 'saveSubjects']);
 
+// New route for AI-powered lesson topic generation
+Route::post('/api/generate-lesson-topics', [CurriculumController::class, 'generateLessonTopics'])->name('api.generate_lesson_topics');
+
 // New route for AI-powered lesson plan generation
 Route::post('/api/generate-lesson-plan', [CurriculumController::class, 'generateLessonPlan'])->name('api.generate_lesson_plan');
 
