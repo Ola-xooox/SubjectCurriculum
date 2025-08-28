@@ -23,6 +23,9 @@ Route::get('/api/curriculums', [CurriculumController::class, 'getCurriculums'])-
 Route::get('/api/curriculums/{id}', [CurriculumController::class, 'getCurriculumData']);
 Route::post('/api/curriculums/save', [CurriculumController::class, 'saveSubjects']);
 
+// New route for AI-powered lesson plan generation
+Route::post('/api/generate-lesson-plan', [CurriculumController::class, 'generateLessonPlan'])->name('api.generate_lesson_plan');
+
 Route::get('/pre_requisite', function () {
     return view('pre_requisite');
 })->name('pre_requisite');
