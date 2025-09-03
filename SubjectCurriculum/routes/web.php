@@ -23,11 +23,14 @@ Route::get('/api/curriculums', [CurriculumController::class, 'getCurriculums'])-
 Route::get('/api/curriculums/{id}', [CurriculumController::class, 'getCurriculumData']);
 Route::post('/api/curriculums/save', [CurriculumController::class, 'saveSubjects']);
 
-// New route for AI-powered lesson topic generation
-Route::post('/api/generate-lesson-topics', [CurriculumController::class, 'generateLessonTopics'])->name('api.generate_lesson_topics');
+// Routes for handling subjects
+Route::get('/api/subjects', [CurriculumController::class, 'getAllSubjects'])->name('api.subjects.index'); // <-- NEW
+Route::post('/api/subjects', [CurriculumController::class, 'storeSubject'])->name('api.subjects.store');
 
-// New route for AI-powered lesson plan generation
+// AI-powered lesson generation routes
+Route::post('/api/generate-lesson-topics', [CurriculumController::class, 'generateLessonTopics'])->name('api.generate_lesson_topics');
 Route::post('/api/generate-lesson-plan', [CurriculumController::class, 'generateLessonPlan'])->name('api.generate_lesson_plan');
+
 
 Route::get('/pre_requisite', function () {
     return view('pre_requisite');
@@ -51,14 +54,11 @@ Route::get('/subject_history', function () {
 
 // CHED Compliance Validator
 Route::get('/compliance-validator', function () {
-    // You'll need to pass the curriculums and CMOs to this view
-    // from a controller method in a real application.
-    $curriculums = []; // Replace with your actual data
-    $cmos = []; // Replace with your actual data
+    $curriculums = []; 
+    $cmos = [];
     return view('compliance_validator', compact('curriculums', 'cmos'));
 })->name('compliance.validator');
 
-// You will also need a route to handle the form submission
 Route::post('/compliance-validator/validate', function () {
     // Handle validation logic here
 })->name('ched.validator.validate');

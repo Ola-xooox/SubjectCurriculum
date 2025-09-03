@@ -38,6 +38,7 @@
 
                 {{-- Subject List --}}
                 <div id="availableSubjects" class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2">
+                    {{-- THIS TEXT WILL BE REPLACED ON PAGE LOAD --}}
                     <p class="text-gray-500 text-center mt-4">Select a curriculum to view subjects.</p>
                 </div>
             </div>
@@ -271,29 +272,60 @@
         subjectForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const subjectCode = document.getElementById('subjectCode').value;
-            const subjectName = document.getElementById('subjectName').value;
-            const subjectType = document.getElementById('subjectType').value;
-            const subjectUnit = document.getElementById('subjectUnit').value;
+            const subjectData = {
+                subjectName: document.getElementById('subjectName').value,
+                subjectCode: document.getElementById('subjectCode').value,
+                subjectType: document.getElementById('subjectType').value,
+                subjectUnit: document.getElementById('subjectUnit').value,
+                lessons: {}
+            };
 
-            const lessons = {};
             for (let i = 1; i <= 15; i++) {
                 const weekLessons = document.getElementById(`week-${i}-lessons`).value;
                 if (weekLessons.trim() !== '') {
-                    lessons[`Week ${i}`] = weekLessons.trim();
+                    subjectData.lessons[`Week ${i}`] = weekLessons.trim();
                 }
             }
 
-            const newSubjectCard = createSubjectCard({
-                subject_code: subjectCode,
-                subject_name: subjectName,
-                subject_type: subjectType,
-                subject_unit: subjectUnit,
-                lessons: lessons
+            fetch('/api/subjects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json', 
+                },
+                body: JSON.stringify(subjectData)
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw errorData;
+                }
+                return response.json();
+            })
+            .then(data => {
+                // *** START: FIX for displaying subject immediately ***
+                // 1. Remove the placeholder text if it exists
+                const placeholder = availableSubjectsContainer.querySelector('p');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                // 2. Add the new subject to the list
+                const newSubjectCard = createSubjectCard(data.subject);
+                availableSubjectsContainer.prepend(newSubjectCard);
+                // *** END: FIX ***
+                hideSubjectModal();
+            })
+            .catch(error => {
+                console.error('Error creating subject:', error);
+                let errorMessage = 'An unknown error occurred. Please try again.';
+                if (error.errors) {
+                    errorMessage = Object.values(error.errors).map(messages => messages.join('\n')).join('\n');
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                alert('Could not create subject:\n\n' + errorMessage);
             });
-            availableSubjectsContainer.appendChild(newSubjectCard);
-
-            hideSubjectModal();
         });
 
         generateTopicsButton.addEventListener('click', () => {
@@ -320,7 +352,6 @@
                 return response.json();
             })
             .then(data => {
-                // data is expected to be an object like {"Week 1": "Topic 1", "Week 2": "Topic 2", ...}
                 for (let i = 1; i <= 15; i++) {
                     const weekKey = `Week ${i}`;
                     const weekTextarea = document.getElementById(`week-${i}-lessons`);
@@ -376,12 +407,8 @@
                     return response.json();
                 })
                 .then(data => {
-                    // Correctly parse the new detailed structure
                     const objectives = data.learning_objectives.map(obj => `- ${obj.objective}: ${obj.description}`).join('\n');
-                    
-                    let tableContent = 'Lesson Plan:\n';
-                    tableContent += '--------------------------------------------------\n';
-                    
+                    let tableContent = 'Lesson Plan:\n' + '--------------------------------------------------\n';
                     if (data.lesson_plan_table && Array.isArray(data.lesson_plan_table)) {
                         data.lesson_plan_table.forEach(row => {
                             tableContent += `Activity: ${row.activity || 'N/A'}\n`;
@@ -390,18 +417,12 @@
                             tableContent += '--------------------------------------------------\n';
                         });
                     }
-
                     const lessonContent = data.detailed_lesson_content || 'No detailed lesson content was generated.';
-
-                    weekTextarea.value = `Topic: ${data.topic}\n\n` +
-                                       `Learning Objectives:\n${objectives}\n\n` +
-                                       `${tableContent}\n` +
-                                       `Detailed Lesson:\n${lessonContent}\n\n` +
-                                       `Assessment:\n${data.assessment}`;
+                    weekTextarea.value = `Topic: ${data.topic}\n\n` + `Learning Objectives:\n${objectives}\n\n` + `${tableContent}\n` + `Detailed Lesson:\n${lessonContent}\n\n` + `Assessment:\n${data.assessment}`;
                 })
                 .catch(error => {
                     console.error('Error generating detailed lesson:', error);
-                    let errorMessage = 'An error occurred while generating the detailed lesson. Check the browser console for more details.';
+                    let errorMessage = 'An error occurred. Check console for details.';
                     if (error && error.message) {
                         errorMessage = `Error: ${error.message}`;
                     }
@@ -413,10 +434,9 @@
             });
         });
         
-        // --- Search and Filter Logic ---
+        // --- Search and Filter Logic (Unchanged) ---
         const searchInput = document.getElementById('searchInput');
         const typeFilter = document.getElementById('typeFilter');
-
         const filterSubjects = () => {
             const searchTerm = searchInput.value.toLowerCase();
             const selectedType = typeFilter.value;
@@ -424,35 +444,23 @@
 
             subjectCards.forEach(card => {
                 const subjectData = JSON.parse(card.dataset.subjectData);
-                const subjectName = subjectData.subject_name.toLowerCase();
-                const subjectCode = subjectData.subject_code.toLowerCase();
-                const subjectType = subjectData.subject_type;
-
-                const searchMatch = subjectName.includes(searchTerm) || subjectCode.includes(searchTerm);
-                const typeMatch = (selectedType === 'All Types' || subjectType === selectedType);
-
-                if (searchMatch && typeMatch) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                const searchMatch = subjectData.subject_name.toLowerCase().includes(searchTerm) || subjectData.subject_code.toLowerCase().includes(searchTerm);
+                const typeMatch = (selectedType === 'All Types' || subjectData.subject_type === selectedType);
+                card.style.display = (searchMatch && typeMatch) ? 'flex' : 'none';
             });
         };
-
         searchInput.addEventListener('input', filterSubjects);
         typeFilter.addEventListener('change', filterSubjects);
 
-        // --- Double-click Modal Logic ---
+        // --- Double-click Modal Logic (Unchanged) ---
         const subjectDetailsModal = document.getElementById('subjectDetailsModal');
         const closeDetailsModalButton = document.getElementById('closeDetailsModalButton');
         const modalDetailsPanel = document.getElementById('modal-details-panel');
-
         const showDetailsModal = (data) => {
             document.getElementById('detailsSubjectName').textContent = `${data.subject_name} (${data.subject_code})`;
             document.getElementById('detailsSubjectCode').textContent = data.subject_code;
             document.getElementById('detailsSubjectType').textContent = data.subject_type;
             document.getElementById('detailsSubjectUnit').textContent = data.subject_unit;
-            
             const lessonsContainer = document.getElementById('detailsLessonsContainer');
             lessonsContainer.innerHTML = '<h3 class="text-md font-bold text-gray-800 pt-4">Lessons</h3>';
             if (data.lessons && Object.keys(data.lessons).length > 0) {
@@ -465,86 +473,48 @@
             } else {
                 lessonsContainer.innerHTML += '<p class="text-sm text-gray-500">No lessons recorded for this subject.</p>';
             }
-
             subjectDetailsModal.classList.remove('hidden');
             setTimeout(() => {
                 subjectDetailsModal.classList.remove('opacity-0');
                 modalDetailsPanel.classList.remove('opacity-0', 'scale-95');
             }, 10);
         };
-
         const hideDetailsModal = () => {
             subjectDetailsModal.classList.add('opacity-0');
             modalDetailsPanel.classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                subjectDetailsModal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => subjectDetailsModal.classList.add('hidden'), 300);
         };
-
         closeDetailsModalButton.addEventListener('click', hideDetailsModal);
-        subjectDetailsModal.addEventListener('click', (e) => {
-            if (e.target.id === 'subjectDetailsModal') {
-                hideDetailsModal();
-            }
-        });
+        subjectDetailsModal.addEventListener('click', (e) => { if (e.target.id === 'subjectDetailsModal') hideDetailsModal(); });
 
-        // --- Drag and Drop Logic ---
+        // --- Drag and Drop Logic (Unchanged) ---
         let draggedItem = null;
-
         const addDraggableEvents = (item) => {
             item.addEventListener('dragstart', (e) => {
                 draggedItem = item;
                 e.dataTransfer.setData('text/plain', item.dataset.subjectData);
-                setTimeout(() => {
-                    item.classList.add('opacity-50', 'bg-gray-200');
-                }, 0);
+                setTimeout(() => item.classList.add('opacity-50', 'bg-gray-200'), 0);
             });
-
             item.addEventListener('dragend', () => {
                 item.classList.remove('opacity-50', 'bg-gray-200');
                 draggedItem = null;
             });
         };
-
         const addDoubleClickEvents = (item) => {
-            item.addEventListener('dblclick', () => {
-                const subjectData = JSON.parse(item.dataset.subjectData);
-                showDetailsModal(subjectData);
-            });
+            item.addEventListener('dblclick', () => showDetailsModal(JSON.parse(item.dataset.subjectData)));
         };
-        
         const createSubjectCard = (subject) => {
             const newSubjectCard = document.createElement('div');
             newSubjectCard.id = `subject-${subject.subject_code.toLowerCase()}`;
-            newSubjectCard.classList.add(
-                'subject-card', 'flex', 'items-center', 'justify-between', 'p-3',
-                'bg-white', 'hover:bg-blue-50', 'border', 'border-gray-200',
-                'rounded-lg', 'cursor-grab', 'transition'
-            );
+            newSubjectCard.className = 'subject-card flex items-center justify-between p-3 bg-white hover:bg-blue-50 border border-gray-200 rounded-lg cursor-grab transition';
             newSubjectCard.setAttribute('draggable', 'true');
             newSubjectCard.dataset.subjectData = JSON.stringify(subject);
-
-            newSubjectCard.innerHTML = `
-                <div>
-                    <p class="font-semibold text-gray-700">${subject.subject_code}</p>
-                    <p class="text-xs text-gray-500">${subject.subject_name}</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <button class="delete-subject-btn text-gray-400 hover:text-red-500 transition-colors duration-200" aria-label="Delete subject">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-            `;
+            newSubjectCard.innerHTML = `<div><p class="font-semibold text-gray-700">${subject.subject_code}</p><p class="text-xs text-gray-500">${subject.subject_name}</p></div><div class="flex items-center space-x-2"><button class="delete-subject-btn text-gray-400 hover:text-red-500 transition-colors duration-200" aria-label="Delete subject"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
             addDraggableEvents(newSubjectCard);
             addDoubleClickEvents(newSubjectCard);
             addDeleteButtonEvents(newSubjectCard);
-
             return newSubjectCard;
         };
-
         const addDeleteButtonEvents = (item) => {
             const deleteBtn = item.querySelector('.delete-subject-btn');
             if (deleteBtn) {
@@ -554,148 +524,83 @@
                 });
             }
         };
-
         const initDragAndDrop = () => {
-            const dropzones = document.querySelectorAll('.semester-dropzone');
-            
-            dropzones.forEach(dropzone => {
+            document.querySelectorAll('.semester-dropzone').forEach(dropzone => {
                 dropzone.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     dropzone.classList.add('border-blue-500', 'bg-blue-50');
                 });
-
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-                });
-
+                dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500', 'bg-blue-50'));
                 dropzone.addEventListener('drop', (e) => {
                     e.preventDefault();
                     dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-                    if (draggedItem) {
-                        const droppedSubjectData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                        
-                        const existingTags = dropzone.querySelectorAll('.subject-tag');
-                        const isDuplicate = Array.from(existingTags).some(tag => {
-                            const tagData = JSON.parse(tag.dataset.subjectData);
-                            return tagData.subject_code === droppedSubjectData.subject_code;
-                        });
-                        
-                        if (!isDuplicate) {
-                            const subjectTag = document.createElement('div');
-                            subjectTag.classList.add(
-                                'subject-tag', 'bg-blue-100', 'text-blue-800', 'text-sm',
-                                'font-medium', 'px-3', 'py-1', 'rounded-full', 'cursor-grab'
-                            );
-                            subjectTag.textContent = droppedSubjectData.subject_code;
-                            subjectTag.setAttribute('draggable', 'true');
-                            subjectTag.dataset.subjectData = JSON.stringify(droppedSubjectData);
-
-                            addDraggableEvents(subjectTag);
-                            addDoubleClickEvents(subjectTag);
-                            
-                            dropzone.querySelector('.flex-wrap').appendChild(subjectTag);
-                        }
+                    if (!draggedItem) return;
+                    const droppedSubjectData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    const isDuplicate = Array.from(dropzone.querySelectorAll('.subject-tag')).some(tag => JSON.parse(tag.dataset.subjectData).subject_code === droppedSubjectData.subject_code);
+                    if (!isDuplicate) {
+                        const subjectTag = document.createElement('div');
+                        subjectTag.className = 'subject-tag bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full cursor-grab';
+                        subjectTag.textContent = droppedSubjectData.subject_code;
+                        subjectTag.setAttribute('draggable', 'true');
+                        subjectTag.dataset.subjectData = JSON.stringify(droppedSubjectData);
+                        addDraggableEvents(subjectTag);
+                        addDoubleClickEvents(subjectTag);
+                        dropzone.querySelector('.flex-wrap').appendChild(subjectTag);
                     }
                 });
             });
+            const mainContentArea = document.querySelector('main');
+            mainContentArea.addEventListener('dragover', e => e.preventDefault());
+            mainContentArea.addEventListener('drop', e => {
+                if (draggedItem && draggedItem.classList.contains('subject-tag') && !e.target.closest('.semester-dropzone')) {
+                    draggedItem.remove();
+                }
+            });
         };
 
-        // Add a droppable area for removal
-        const mainContentArea = document.querySelector('main');
-        mainContentArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
-
-        mainContentArea.addEventListener('drop', (e) => {
-            const isDroppedInDropzone = e.target.closest('.semester-dropzone');
-            if (draggedItem && draggedItem.classList.contains('subject-tag') && !isDroppedInDropzone) {
-                draggedItem.remove();
-            }
-        });
-
-        // --- Save Button & Success Modal Logic ---
+        // --- Save Button & Success Modal Logic (Unchanged) ---
         const saveCurriculumButton = document.getElementById('saveCurriculumButton');
         const successModal = document.getElementById('successModal');
         const closeSuccessModalButton = document.getElementById('closeSuccessModalButton');
-        const modalSuccessPanel = document.getElementById('modal-success-panel');
-
         const showSuccessModal = () => {
             successModal.classList.remove('hidden');
             setTimeout(() => {
                 successModal.classList.remove('opacity-0');
-                modalSuccessPanel.classList.remove('opacity-0', 'scale-95');
+                document.getElementById('modal-success-panel').classList.remove('opacity-0', 'scale-95');
             }, 10);
         };
-
         const hideSuccessModal = () => {
             successModal.classList.add('opacity-0');
-            modalSuccessPanel.classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                successModal.classList.add('hidden');
-            }, 300);
+            document.getElementById('modal-success-panel').classList.add('opacity-0', 'scale-95');
+            setTimeout(() => successModal.classList.add('hidden'), 300);
         };
-
         closeSuccessModalButton.addEventListener('click', hideSuccessModal);
-        successModal.addEventListener('click', (e) => {
-            if (e.target.id === 'successModal') {
-                hideSuccessModal();
-            }
-        });
-
+        successModal.addEventListener('click', (e) => { if (e.target.id === 'successModal') hideSuccessModal(); });
         saveCurriculumButton.addEventListener('click', () => {
             const curriculumId = curriculumSelector.value;
-            if (!curriculumId) {
-                alert('Please select a curriculum to save.');
-                return;
-            }
-
+            if (!curriculumId) return alert('Please select a curriculum to save.');
             const curriculumData = [];
-            const semesterDropzones = document.querySelectorAll('#curriculumOverview .semester-dropzone');
-            semesterDropzones.forEach(dropzone => {
+            document.querySelectorAll('#curriculumOverview .semester-dropzone').forEach(dropzone => {
                 const year = parseInt(dropzone.dataset.year, 10);
                 const semester = parseInt(dropzone.dataset.semester, 10);
                 const subjects = [];
                 dropzone.querySelectorAll('.subject-tag').forEach(tag => {
-                    const subjectData = JSON.parse(tag.dataset.subjectData);
-                    // Standardize the data to match the expected backend payload
-                    subjects.push({
-                        subjectCode: subjectData.subject_code,
-                        subjectName: subjectData.subject_name,
-                        subjectType: subjectData.subject_type,
-                        subjectUnit: subjectData.subject_unit,
-                        lessons: subjectData.lessons || {},
-                    });
+                    const sData = JSON.parse(tag.dataset.subjectData);
+                    subjects.push({ subjectCode: sData.subject_code, subjectName: sData.subject_name, subjectType: sData.subject_type, subjectUnit: sData.subject_unit, lessons: sData.lessons || {} });
                 });
-                if (subjects.length > 0) {
-                    curriculumData.push({ year, semester, subjects });
-                }
+                if (subjects.length > 0) curriculumData.push({ year, semester, subjects });
             });
-            
             fetch('/api/curriculums/save', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
                 body: JSON.stringify({ curriculumId, curriculumData })
             })
             .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw new Error(errorData.message || 'Failed to save curriculum.');
-                    });
-                }
+                if (!response.ok) throw new Error('Failed to save.');
                 return response.json();
             })
-            .then(data => {
-                console.log(data.message);
-                showSuccessModal();
-            })
-            .catch(error => {
-                console.error('Error saving curriculum:', error);
-                // A more user-friendly error message could be displayed here
-                alert('An error occurred while saving. Please try again.');
-            });
+            .then(() => showSuccessModal())
+            .catch(error => alert('An error occurred while saving.'));
         });
 
         // --- Core Application Logic ---
@@ -710,20 +615,15 @@
                     curriculums.forEach(curriculum => {
                         const option = document.createElement('option');
                         option.value = curriculum.id;
-                        option.textContent = curriculum.name; // Use the formatted name from the backend
+                        option.textContent = curriculum.name;
                         curriculumSelector.appendChild(option);
                     });
-                    
                     const urlParams = new URLSearchParams(window.location.search);
                     const newCurriculumId = urlParams.get('curriculumId');
                     if (newCurriculumId) {
                         curriculumSelector.value = newCurriculumId;
                         fetchCurriculumData(newCurriculumId);
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching curriculums:', error);
-                    // Handle error gracefully on the UI
                 });
         }
         
@@ -733,7 +633,9 @@
                 fetchCurriculumData(curriculumId);
             } else {
                 curriculumOverview.innerHTML = '<p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>';
-                availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">Select a curriculum to view subjects.</p>';
+                // *** START: FIX for displaying subjects without a curriculum selected ***
+                fetchAllSubjects(); // Reload all subjects when deselecting
+                // *** END: FIX ***
             }
         });
 
@@ -744,10 +646,6 @@
                     renderCurriculumOverview(data.curriculum.year_level);
                     renderAvailableSubjects(data.allSubjects);
                     populateMappedSubjects(data.curriculum.subjects);
-                })
-                .catch(error => {
-                    console.error('Error fetching curriculum data:', error);
-                    // Handle error gracefully on the UI
                 });
         }
 
@@ -756,21 +654,7 @@
             const maxYear = parseInt(yearLevel, 10);
             for (let i = 1; i <= maxYear; i++) {
                 const yearTitle = i === 1 ? '1st Year' : (i === 2 ? '2nd Year' : (i === 3 ? '3rd Year' : '4th Year'));
-                html += `
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-3">${yearTitle}</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="1">
-                                <h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">First Semester</h4>
-                                <div class="flex flex-wrap gap-2"></div>
-                            </div>
-                            <div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="2">
-                                <h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">Second Semester</h4>
-                                <div class="flex flex-wrap gap-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html += `<div><h3 class="text-lg font-semibold text-gray-700 mb-3">${yearTitle}</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="1"><h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">First Semester</h4><div class="flex flex-wrap gap-2"></div></div><div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="2"><h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">Second Semester</h4><div class="flex flex-wrap gap-2"></div></div></div></div>`;
             }
             curriculumOverview.innerHTML = html;
             initDragAndDrop();
@@ -793,14 +677,10 @@
                 const dropzone = document.querySelector(`#curriculumOverview .semester-dropzone[data-year="${subject.pivot.year}"][data-semester="${subject.pivot.semester}"] .flex-wrap`);
                 if (dropzone) {
                     const subjectTag = document.createElement('div');
-                    subjectTag.classList.add(
-                        'subject-tag', 'bg-blue-100', 'text-blue-800', 'text-sm',
-                        'font-medium', 'px-3', 'py-1', 'rounded-full', 'cursor-grab'
-                    );
+                    subjectTag.className = 'subject-tag bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full cursor-grab';
                     subjectTag.textContent = subject.subject_code;
                     subjectTag.setAttribute('draggable', 'true');
                     subjectTag.dataset.subjectData = JSON.stringify(subject);
-                    
                     addDraggableEvents(subjectTag);
                     addDoubleClickEvents(subjectTag);
                     dropzone.appendChild(subjectTag);
@@ -808,8 +688,24 @@
             });
         }
         
-        // Initial call to load curriculums on page load
+        // *** START: FIX - New function to load all subjects ***
+        function fetchAllSubjects() {
+             availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">Loading subjects...</p>';
+            fetch('/api/subjects')
+                .then(response => response.json())
+                .then(subjects => {
+                    renderAvailableSubjects(subjects);
+                })
+                .catch(error => {
+                    console.error('Error fetching all subjects:', error);
+                    availableSubjectsContainer.innerHTML = '<p class="text-red-500 text-center mt-4">Could not load subjects.</p>';
+                });
+        }
+        // *** END: FIX ***
+
+        // --- Initial Calls on Page Load ---
         fetchCurriculums();
+        fetchAllSubjects(); // <-- This is the key change!
     });
 </script>
 @endsection

@@ -65,9 +65,42 @@ class CurriculumController extends Controller
         return response()->json(['message' => 'Curriculum saved successfully!']);
     }
 
+    public function storeSubject(Request $request)
+    {
+        $validated = $request->validate([
+            'subjectName' => 'required|string|max:255',
+            'subjectCode' => 'required|string|max:255|unique:subjects,subject_code',
+            'subjectType' => 'required|string|in:Major,Minor,Elective',
+            'subjectUnit' => 'required|integer',
+            'lessons' => 'nullable|array',
+        ]);
+
+        $subject = Subject::create([
+            'subject_name' => $validated['subjectName'],
+            'subject_code' => $validated['subjectCode'],
+            'subject_type' => $validated['subjectType'],
+            'subject_unit' => $validated['subjectUnit'],
+            'lessons' => $validated['lessons'],
+        ]);
+
+        return response()->json([
+            'message' => 'Subject created successfully!',
+            'subject' => $subject,
+        ], 201);
+    }
+    
+    // START: NEW METHOD
+    /**
+     * Fetch all subjects.
+     */
+    public function getAllSubjects()
+    {
+        return response()->json(Subject::all());
+    }
+    // END: NEW METHOD
+
     public function getCurriculums()
     {
-        // Fetch all curriculums and format them as an array of objects.
         return response()->json(Curriculum::all()->map(function ($curriculum) {
             return [
                 'id' => $curriculum->id,
@@ -83,7 +116,7 @@ class CurriculumController extends Controller
     public function getCurriculumData($id)
     {
         $curriculum = Curriculum::with('subjects')->findOrFail($id);
-        $allSubjects = Subject::all(); // Get all subjects for the available list
+        $allSubjects = Subject::all();
 
         return response()->json([
             'curriculum' => $curriculum,
@@ -91,9 +124,6 @@ class CurriculumController extends Controller
         ]);
     }
 
-    /**
-     * Generate weekly topics using Google AI Studio (Gemini API).
-     */
     public function generateLessonTopics(Request $request)
     {
         $validated = $request->validate([
@@ -145,9 +175,6 @@ class CurriculumController extends Controller
         }
     }
 
-    /**
-     * Generate a detailed lesson plan for a specific topic using Google AI Studio (Gemini API).
-     */
     public function generateLessonPlan(Request $request)
     {
         $validated = $request->validate([
