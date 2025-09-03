@@ -48,3 +48,17 @@ Route::get('/equivalency_tool', function () {
 Route::get('/subject_history', function () {
     return view('subject_history');
 })->name('subject_history');
+
+// CHED Compliance Validator
+Route::get('/compliance-validator', function () {
+    // You'll need to pass the curriculums and CMOs to this view
+    // from a controller method in a real application.
+    $curriculums = []; // Replace with your actual data
+    $cmos = []; // Replace with your actual data
+    return view('compliance_validator', compact('curriculums', 'cmos'));
+})->name('compliance.validator');
+
+// You will also need a route to handle the form submission
+Route::post('/compliance-validator/validate', function () {
+    // Handle validation logic here
+})->name('ched.validator.validate');
