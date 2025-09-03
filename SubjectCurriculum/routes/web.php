@@ -22,6 +22,8 @@ Route::get('/subject_mapping', function () {
 Route::get('/api/curriculums', [CurriculumController::class, 'getCurriculums'])->name('api.curriculums');
 Route::get('/api/curriculums/{id}', [CurriculumController::class, 'getCurriculumData']);
 Route::post('/api/curriculums/save', [CurriculumController::class, 'saveSubjects']);
+Route::get('/api/curriculums/{id}/with-subjects', [CurriculumController::class, 'getCurriculumWithSubjects']);
+
 
 // Routes for handling subjects
 Route::get('/api/subjects', [CurriculumController::class, 'getAllSubjects'])->name('api.subjects.index'); // <-- NEW
@@ -54,7 +56,7 @@ Route::get('/subject_history', function () {
 
 // CHED Compliance Validator
 Route::get('/compliance-validator', function () {
-    $curriculums = []; 
+    $curriculums = [];
     $cmos = [];
     return view('compliance_validator', compact('curriculums', 'cmos'));
 })->name('compliance.validator');

@@ -3,7 +3,7 @@
 @section('content')
 <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
     <div class="bg-white rounded-2xl shadow-xl p-8">
-        
+
         <div class="mb-6 flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Subject Mapping</h1>
@@ -16,13 +16,13 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             <div class="lg:col-span-1 bg-gray-50 border border-gray-200 rounded-xl p-6 flex flex-col">
                 <div class="pb-4 border-b border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-800">Available Subjects</h2>
                     <p class="text-sm text-gray-500">Find and select subjects to add to the curriculum.</p>
                 </div>
-                
+
                 <div class="flex flex-col sm:flex-row gap-3 my-4">
                     <div class="relative flex-grow">
                         <input type="text" id="searchInput" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Search subject...">
@@ -56,7 +56,7 @@
                     {{-- Dynamically generated content will be placed here --}}
                     <p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>
                 </div>
-                
+
                 {{-- Save Button --}}
                 <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end">
                     <button id="saveCurriculumButton" class="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-md">
@@ -72,7 +72,7 @@
     <div id="addSubjectModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-out hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="relative bg-white w-full max-w-6xl rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95 opacity-0 transition-all duration-300 ease-out" id="modal-subject-panel">
-                
+
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-extrabold text-gray-800">Create New Subject</h2>
                     <button id="closeSubjectModalButton" class="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200" aria-label="Close modal">
@@ -81,7 +81,7 @@
                         </svg>
                     </button>
                 </div>
-                
+
                 <form id="subjectForm" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-1">
@@ -107,7 +107,7 @@
                         <label for="subjectUnit" class="block text-sm font-semibold text-gray-700 mb-1">Unit</label>
                         <input type="number" id="subjectUnit" name="subjectUnit" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
                     </div>
-                    
+
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-semibold text-gray-700">Weekly Topics</h3>
@@ -171,7 +171,7 @@
                         </svg>
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -263,7 +263,7 @@
                 const parent = button.parentElement;
                 const contentDiv = parent.querySelector('.week-content');
                 const svg = button.querySelector('svg');
-                
+
                 contentDiv.classList.toggle('hidden');
                 svg.classList.toggle('rotate-180');
             });
@@ -292,7 +292,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json', 
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify(subjectData)
             })
@@ -304,16 +304,12 @@
                 return response.json();
             })
             .then(data => {
-                // *** START: FIX for displaying subject immediately ***
-                // 1. Remove the placeholder text if it exists
                 const placeholder = availableSubjectsContainer.querySelector('p');
                 if (placeholder) {
                     placeholder.remove();
                 }
-                // 2. Add the new subject to the list
                 const newSubjectCard = createSubjectCard(data.subject);
                 availableSubjectsContainer.prepend(newSubjectCard);
-                // *** END: FIX ***
                 hideSubjectModal();
             })
             .catch(error => {
@@ -433,8 +429,7 @@
                 });
             });
         });
-        
-        // --- Search and Filter Logic (Unchanged) ---
+
         const searchInput = document.getElementById('searchInput');
         const typeFilter = document.getElementById('typeFilter');
         const filterSubjects = () => {
@@ -452,7 +447,6 @@
         searchInput.addEventListener('input', filterSubjects);
         typeFilter.addEventListener('change', filterSubjects);
 
-        // --- Double-click Modal Logic (Unchanged) ---
         const subjectDetailsModal = document.getElementById('subjectDetailsModal');
         const closeDetailsModalButton = document.getElementById('closeDetailsModalButton');
         const modalDetailsPanel = document.getElementById('modal-details-panel');
@@ -487,7 +481,6 @@
         closeDetailsModalButton.addEventListener('click', hideDetailsModal);
         subjectDetailsModal.addEventListener('click', (e) => { if (e.target.id === 'subjectDetailsModal') hideDetailsModal(); });
 
-        // --- Drag and Drop Logic (Unchanged) ---
         let draggedItem = null;
         const addDraggableEvents = (item) => {
             item.addEventListener('dragstart', (e) => {
@@ -558,24 +551,7 @@
             });
         };
 
-        // --- Save Button & Success Modal Logic (Unchanged) ---
         const saveCurriculumButton = document.getElementById('saveCurriculumButton');
-        const successModal = document.getElementById('successModal');
-        const closeSuccessModalButton = document.getElementById('closeSuccessModalButton');
-        const showSuccessModal = () => {
-            successModal.classList.remove('hidden');
-            setTimeout(() => {
-                successModal.classList.remove('opacity-0');
-                document.getElementById('modal-success-panel').classList.remove('opacity-0', 'scale-95');
-            }, 10);
-        };
-        const hideSuccessModal = () => {
-            successModal.classList.add('opacity-0');
-            document.getElementById('modal-success-panel').classList.add('opacity-0', 'scale-95');
-            setTimeout(() => successModal.classList.add('hidden'), 300);
-        };
-        closeSuccessModalButton.addEventListener('click', hideSuccessModal);
-        successModal.addEventListener('click', (e) => { if (e.target.id === 'successModal') hideSuccessModal(); });
         saveCurriculumButton.addEventListener('click', () => {
             const curriculumId = curriculumSelector.value;
             if (!curriculumId) return alert('Please select a curriculum to save.');
@@ -599,11 +575,14 @@
                 if (!response.ok) throw new Error('Failed to save.');
                 return response.json();
             })
-            .then(() => showSuccessModal())
+            .then(data => {
+                // Redirect to pre_requisite page with curriculumId
+                window.location.href = `/pre_requisite?curriculumId=${curriculumId}`;
+            })
             .catch(error => alert('An error occurred while saving.'));
         });
 
-        // --- Core Application Logic ---
+
         const curriculumSelector = document.getElementById('curriculumSelector');
         const curriculumOverview = document.getElementById('curriculumOverview');
 
@@ -626,16 +605,14 @@
                     }
                 });
         }
-        
+
         curriculumSelector.addEventListener('change', (e) => {
             const curriculumId = e.target.value;
             if (curriculumId) {
                 fetchCurriculumData(curriculumId);
             } else {
                 curriculumOverview.innerHTML = '<p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>';
-                // *** START: FIX for displaying subjects without a curriculum selected ***
-                fetchAllSubjects(); // Reload all subjects when deselecting
-                // *** END: FIX ***
+                fetchAllSubjects();
             }
         });
 
@@ -687,8 +664,7 @@
                 }
             });
         }
-        
-        // *** START: FIX - New function to load all subjects ***
+
         function fetchAllSubjects() {
              availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">Loading subjects...</p>';
             fetch('/api/subjects')
@@ -701,11 +677,9 @@
                     availableSubjectsContainer.innerHTML = '<p class="text-red-500 text-center mt-4">Could not load subjects.</p>';
                 });
         }
-        // *** END: FIX ***
 
-        // --- Initial Calls on Page Load ---
         fetchCurriculums();
-        fetchAllSubjects(); // <-- This is the key change!
+        fetchAllSubjects();
     });
 </script>
 @endsection

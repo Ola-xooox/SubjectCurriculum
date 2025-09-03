@@ -39,12 +39,10 @@ class CurriculumController extends Controller
 
         $curriculum = Curriculum::findOrFail($validated['curriculumId']);
 
-        // Clear existing subjects to prevent duplicates on resaving
         $curriculum->subjects()->detach();
 
         foreach ($validated['curriculumData'] as $data) {
             foreach ($data['subjects'] as $subject) {
-                // Find or create the subject. This handles new subjects from the 'Add New Subject' form
                 $dbSubject = Subject::firstOrCreate(
                     ['subject_code' => $subject['subjectCode']],
                     [
@@ -61,9 +59,21 @@ class CurriculumController extends Controller
                 ]);
             }
         }
-        
-        return response()->json(['message' => 'Curriculum saved successfully!']);
+
+        return response()->json(['message' => 'Curriculum saved successfully!', 'curriculumId' => $curriculum->id]);
     }
+
+    public function getCurriculumWithSubjects($id)
+    {
+        $curriculum = Curriculum::findOrFail($id);
+        $subjects = $curriculum->subjects()->get();
+
+        return response()->json([
+            'curriculum' => $curriculum,
+            'subjects' => $subjects,
+        ]);
+    }
+
 
     public function storeSubject(Request $request)
     {
@@ -88,16 +98,11 @@ class CurriculumController extends Controller
             'subject' => $subject,
         ], 201);
     }
-    
-    // START: NEW METHOD
-    /**
-     * Fetch all subjects.
-     */
+
     public function getAllSubjects()
     {
         return response()->json(Subject::all());
     }
-    // END: NEW METHOD
 
     public function getCurriculums()
     {
@@ -187,7 +192,7 @@ class CurriculumController extends Controller
             return response()->json(['error' => 'Google AI API key is not configured.'], 500);
         }
 
-        $prompt = "Generate a full and detailed lesson for the topic '{$validated['topic']}' within the subject '{$validated['subjectName']}'. The lesson should be comprehensive enough for a teacher to use directly in a class for Grade 11, Grade 12, and early college-level students, similar in structure and depth to a textbook chapter. The content must be up-to-date with the latest industry trends as of 2025. IMPORTANT: The output must be a valid JSON object with the following five keys: 
+        $prompt = "Generate a full and detailed lesson for the topic '{$validated['topic']}' within the subject '{$validated['subjectName']}'. The lesson should be comprehensive enough for a teacher to use directly in a class for Grade 11, Grade 12, and early college-level students, similar in structure and depth to a textbook chapter. The content must be up-to-date with the latest industry trends as of 2025. IMPORTANT: The output must be a valid JSON object with the following five keys:
         1. 'topic': a string with the lesson title.
         2. 'learning_objectives': an array of objects, where each object has two keys: 'objective' (a string for the goal) and 'description' (a detailed string explaining the objective).
         3. 'lesson_plan_table': an array of objects, where each object has 'activity' (e.g., 'Introduction', 'Lecture', 'Activity'), 'description' (what happens), and 'duration_minutes' (integer) keys.
