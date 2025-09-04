@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\CurriculumController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PrerequisiteController;
+
 
 Route::get('/', function () {
     return view('dashboard');
@@ -64,3 +66,6 @@ Route::get('/compliance-validator', function () {
 Route::post('/compliance-validator/validate', function () {
     // Handle validation logic here
 })->name('ched.validator.validate');
+
+Route::get('/prerequisites/{curriculumId}', [PrerequisiteController::class, 'getPrerequisites']);
+Route::post('/prerequisites', [PrerequisiteController::class, 'savePrerequisites']);

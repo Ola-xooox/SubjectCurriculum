@@ -90,6 +90,18 @@
     </div>
 </div>
 
+<!-- Success Modal -->
+<div id="successPrereqModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden transition-opacity duration-300 opacity-0">
+    <div class="bg-white p-8 rounded-3xl shadow-xl text-center w-full max-w-sm">
+        <div class="flex justify-center mb-4">
+            <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
+        <p class="text-sm text-gray-600 mb-6">Prerequisites saved successfully.</p>
+        <button id="closeSuccessPrereqModalButton" class="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors">OK</button>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const prerequisitesModal = document.getElementById('prerequisitesModal');
@@ -128,9 +140,10 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const curriculumIdFromUrl = urlParams.get('curriculumId');
                     if (curriculumIdFromUrl) {
-                        modalCurriculumDropdown.value = curriculumIdFromUrl;
                         mainCurriculumDropdown.value = curriculumIdFromUrl;
-                        fetchSubjectsForCurriculum(curriculumIdFromUrl);
+                        fetchPrerequisitesForCurriculum(curriculumIdFromUrl).then(() => {
+                           renderPrerequisiteChain();
+                        });
                         openModal();
                     }
                 })
@@ -149,6 +162,15 @@
                     populateSubjectDropdowns(data.subjects);
                 })
                 .catch(error => console.error(`Error fetching subjects for curriculum ${curriculumId}:`, error));
+        }
+
+        function fetchPrerequisitesForCurriculum(curriculumId) {
+            return fetch(`/api/prerequisites/${curriculumId}`)
+                .then(response => response.json())
+                .then(data => {
+                    prerequisiteData[curriculumId] = data;
+                })
+                .catch(error => console.error(`Error fetching prerequisites for curriculum ${curriculumId}:`, error));
         }
 
         function populateSubjectDropdowns(subjects) {
@@ -171,7 +193,6 @@
             });
         }
         
-        // --- MODIFIED: This entire function is updated to show the main subject first in the sequence ---
         function renderPrerequisiteChain() {
             const curriculumId = mainCurriculumDropdown.value;
             prerequisiteChainContainer.innerHTML = '';
@@ -196,14 +217,12 @@
                 const relationshipContainer = document.createElement('div');
                 relationshipContainer.className = 'flex flex-wrap items-center justify-center gap-x-2 gap-y-2 p-3 bg-gray-50 rounded-2xl border';
 
-                // MODIFIED: Place the main subject at the START of the chain array
                 const allChainElements = [subjectCode, ...prerequisites];
 
                 allChainElements.forEach((code, index) => {
                     const elementBox = document.createElement('div');
                     elementBox.textContent = code;
                     
-                    // MODIFIED: The first element (index 0) is now the main subject, so it gets the green color.
                     if (index === 0) {
                         elementBox.className = 'text-center bg-green-100 text-green-800 px-4 py-2 rounded-lg font-semibold text-sm';
                     } else {
@@ -211,7 +230,6 @@
                     }
                     relationshipContainer.appendChild(elementBox);
 
-                    // Add an arrow after each element except the last one
                     if (index < allChainElements.length - 1) {
                         const arrowElement = document.createElement('div');
                         arrowElement.innerHTML = `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>`;
@@ -252,7 +270,30 @@
             }, 300);
         };
 
+        // Success modal logic
+        const successPrereqModal = document.getElementById('successPrereqModal');
+        const closeSuccessPrereqModalButton = document.getElementById('closeSuccessPrereqModalButton');
+        function showSuccessPrereqModal() {
+            successPrereqModal.classList.remove('hidden');
+            setTimeout(() => {
+                successPrereqModal.classList.add('opacity-100');
+            }, 10);
+            // Auto-close after 2 seconds
+            setTimeout(hideSuccessPrereqModal, 2000);
+        }
+        function hideSuccessPrereqModal() {
+            successPrereqModal.classList.remove('opacity-100');
+            setTimeout(() => {
+                successPrereqModal.classList.add('hidden');
+            }, 300);
+        }
+        closeSuccessPrereqModalButton.addEventListener('click', hideSuccessPrereqModal);
+        successPrereqModal.addEventListener('click', (e) => {
+            if (e.target === successPrereqModal) hideSuccessPrereqModal();
+        });
+
         saveModalButton.addEventListener('click', () => {
+            // **FIXED**: These lines were missing. They get the data from the modal.
             const curriculumId = modalCurriculumDropdown.value;
             const subject = subjectSelector.value;
             const selectedPrerequisites = Array.from(prerequisitesChecklist.querySelectorAll('input[name="prerequisite"]:checked')).map(cb => cb.value);
@@ -267,15 +308,43 @@
                 return;
             }
 
-            if (!prerequisiteData[curriculumId]) {
-                prerequisiteData[curriculumId] = {};
-            }
+            const payload = {
+                curriculum_id: curriculumId,
+                subject_code: subject,
+                prerequisites: selectedPrerequisites,
+            };
 
-            prerequisiteData[curriculumId][subject] = selectedPrerequisites;
-
-            mainCurriculumDropdown.value = curriculumId;
-            renderPrerequisiteChain();
-            closeModal();
+            fetch('/api/prerequisites', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    // This sends the CSRF token to prevent 419 errors
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // This will help show a more detailed error if something goes wrong
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showSuccessPrereqModal();
+                // **FIXED**: This part reloads the data and closes the modal after saving
+                fetchPrerequisitesForCurriculum(curriculumId).then(() => {
+                    mainCurriculumDropdown.value = curriculumId;
+                    renderPrerequisiteChain();
+                    closeModal();
+                });
+            })
+            .catch(error => {
+                console.error('Error saving prerequisites:', error);
+                const errorMessage = error.message || 'An unknown error occurred. Check the console (F12) for details.';
+                alert(`Error: ${errorMessage}`);
+            });
         });
 
         setPrerequisitesButton.addEventListener('click', openModal);
@@ -287,7 +356,17 @@
         });
 
         mainCurriculumDropdown.addEventListener('change', (event) => {
-            renderPrerequisiteChain();
+            const curriculumId = event.target.value;
+            if(curriculumId) {
+                fetchPrerequisitesForCurriculum(curriculumId).then(() => {
+                    renderPrerequisiteChain();
+                });
+            } else {
+                prerequisiteChainContainer.innerHTML = `
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                        <p class="text-center text-gray-500">Select a curriculum to view the prerequisite chain.</p>
+                    </div>`;
+            }
         });
 
         prerequisitesInput.addEventListener('click', () => {
@@ -295,7 +374,10 @@
         });
 
         prerequisitesChecklist.addEventListener('change', () => {
-            const selected = Array.from(prerequisitesChecklist.querySelectorAll('input:checked')).map(cb => cb.value);
+            const selected = Array.from(prerequisitesChecklist.querySelectorAll('input:checked')).map(cb => {
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                return label ? label.textContent.trim() : cb.value;
+            });
             prerequisitesInput.value = selected.length > 0 ? selected.join(', ') : 'Click to select prerequisites';
         });
 
@@ -313,7 +395,10 @@
                 if (checkbox) checkbox.checked = true;
             });
 
-            prerequisitesInput.value = existingPrerequisites.length > 0 ? existingPrerequisites.join(', ') : 'Click to select prerequisites';
+            prerequisitesInput.value = existingPrerequisites.length > 0 ? existingPrerequisites.map(code => {
+                const label = document.querySelector(`label[for="prereq-${code}"]`);
+                return label ? label.textContent.trim() : code;
+            }).join(', ') : 'Click to select prerequisites';
         });
 
         fetchAllCurriculums();
