@@ -2,74 +2,110 @@
 
 @section('content')
 <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-8">
-    {{-- Removed max-width class to make the container wider --}}
     <div class="container mx-auto">
         {{-- Main Content Section --}}
-        <div class="bg-white p-12 rounded-xl shadow-sm border border-gray-200">
-            <form action="{{ route('ched.validator.validate') }}" method="POST">
-                @csrf
+        <div class="bg-white p-10 md:p-12 rounded-2xl shadow-lg border border-gray-200">
+            
+            {{-- Page Title Section --}}
+            <div class="mb-10">
+                <h1 class="text-3xl font-bold text-gray-900">Compliance Validator</h1>
+                <p class="text-lg text-gray-600 mt-1">Select an agency to view and access official memorandum orders.</p>
+            </div>
 
-                {{-- Page Title Section (Moved Inside) --}}
-                <div class="mb-12 text-left border-b pb-8 border-gray-200">
-                    <h1 class="text-4xl font-bold text-gray-800">Compliance Validator</h1>
-                    <p class="text-lg text-gray-500 mt-2">
-                        Cross-reference your curriculum with CHED standards efficiently.
-                    </p>
-                </div>
-
-                <div class="space-y-12">
-                    {{-- Step 1: Select Curriculum --}}
-                    <div class="relative pl-10">
-                        {{-- Stepper Line & Dot --}}
-                        <div class="absolute left-0 top-1.5 h-full border-l-2 border-gray-200" aria-hidden="true"></div>
-                        <div class="absolute left-[-9px] top-1.5 w-5 h-5 bg-blue-800 rounded-full border-4 border-white" aria-hidden="true"></div>
-
-                        <label for="curriculum_id" class="block text-xl font-semibold text-gray-800">
-                            1. Select Curriculum
-                        </label>
-                        <p class="text-base text-gray-500 mt-1 mb-4">Choose the curriculum program to be validated.</p>
-                        <select name="curriculum_id" id="curriculum_id" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                            <option disabled selected>-- Choose a curriculum --</option>
-                            @foreach($curriculums as $curriculum)
-                                <option value="{{ $curriculum->id }}">
-                                    {{ $curriculum->curriculum_name }} ({{ $curriculum->curriculum_year }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Step 2: Select CMO --}}
-                    <div class="relative pl-10">
-                        {{-- Stepper Dot --}}
-                        <div class="absolute left-[-9px] top-1.5 w-5 h-5 bg-blue-800 rounded-full border-4 border-white" aria-hidden="true"></div>
-
-                        <label for="cmo_id" class="block text-xl font-semibold text-gray-800">
-                            2. Select CHED Memorandum Order
-                        </label>
-                        <p class="text-base text-gray-500 mt-1 mb-4">Choose the CMO to validate the curriculum against.</p>
-                        <select name="cmo_id" id="cmo_id" class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
-                            <option disabled selected>-- Choose a CMO --</option>
-                            @foreach($cmos as $cmo)
-                                <option value="{{ $cmo->id }}">
-                                    {{ $cmo->cmo_number }} - {{ $cmo->title }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Submit Button Area --}}
-                    <div class="pt-8 flex justify-end">
-                        <button type="submit" class="inline-flex items-center px-7 py-3 bg-blue-800 text-white font-semibold text-base rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
-                            {{-- Outline Icon --}}
-                            <svg class="w-5 h-5 mr-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Run Validation
+            {{-- Main Interactive Area --}}
+            <div class="border border-gray-200 rounded-2xl p-8">
+                <div class="relative inline-block text-left w-full max-w-md">
+                    <div>
+                        <button type="button" id="agency-button" class="inline-flex justify-between w-full rounded-lg border border-gray-300 shadow-sm px-5 py-3 bg-white text-base font-medium text-gray-800 hover:bg-gray-50 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200" aria-haspopup="true" aria-expanded="true">
+                            <span id="selected-agency" class="font-semibold">Select Agency</span>
                         </button>
                     </div>
+
+                    <div id="agency-menu" class="origin-top-right absolute left-0 mt-2 w-full rounded-md shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden z-10" role="menu" aria-orientation="vertical" aria-labelledby="agency-button">
+                        <div class="py-1" role="none">
+                            <button type="button" class="agency-option text-gray-700 block w-full text-left px-4 py-3 text-base hover:bg-blue-100 hover:text-blue-800" role="menuitem" data-agency="CHED" data-target="ched-links">CHED</button>
+                            <button type="button" class="agency-option text-gray-700 block w-full text-left px-4 py-3 text-base hover:bg-blue-100 hover:text-blue-800" role="menuitem" data-agency="DepEd" data-target="deped-links">DepEd</button>
+                        </div>
+                    </div>
                 </div>
-            </form>
+
+                <div id="links-container" class="hidden mt-8">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-8">
+                        <h3 id="links-header" class="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-4"></h3>
+                        
+                        <div id="ched-links" class="hidden grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                            @for ($year = 2025; $year >= 1994; $year--)
+                                <a href="https://ched.gov.ph/{{ $year }}-ched-memorandum-orders/" target="_blank" class="group block p-3 rounded-lg hover:bg-blue-100 transition-colors duration-200">
+                                    <span class="font-medium text-blue-700 group-hover:text-blue-800">
+                                        {{ $year }} CHED Memorandum Orders
+                                    </span>
+                                </a>
+                            @endfor
+                        </div>
+
+                        <div id="deped-links" class="hidden">
+                            <p class="text-gray-600">DepEd Issuances will be displayed here once available.</p>
+                            {{-- Add DepEd links here in the future --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const agencyButton = document.getElementById('agency-button');
+    const agencyMenu = document.getElementById('agency-menu');
+    const linksContainer = document.getElementById('links-container');
+    const selectedAgencySpan = document.getElementById('selected-agency');
+    const linksHeader = document.getElementById('links-header');
+
+    // Toggle dropdown menu
+    agencyButton.addEventListener('click', () => {
+        const isHidden = agencyMenu.classList.contains('hidden');
+        agencyMenu.classList.toggle('hidden', !isHidden);
+        agencyButton.setAttribute('aria-expanded', isHidden);
+    });
+
+    // Handle agency selection
+    document.querySelectorAll('.agency-option').forEach(button => {
+        button.addEventListener('click', () => {
+            const agency = button.dataset.agency;
+            const targetId = button.dataset.target;
+
+            // Update button text and links header
+            selectedAgencySpan.textContent = agency;
+            linksHeader.textContent = `Available ${agency} Issuances`;
+
+            // Hide the agency selection dropdown
+            agencyMenu.classList.add('hidden');
+            agencyButton.setAttribute('aria-expanded', 'false');
+
+            // Show the main links container
+            linksContainer.classList.remove('hidden');
+
+            // Hide all specific link sections
+            linksContainer.querySelectorAll('div[id$="-links"]').forEach(div => {
+                div.classList.add('hidden');
+            });
+
+            // Show the target link section
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+        });
+    });
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+        if (!agencyButton.contains(e.target) && !agencyMenu.contains(e.target)) {
+            agencyMenu.classList.add('hidden');
+            agencyButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+});
+</script>
 @endsection
