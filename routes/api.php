@@ -7,6 +7,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\PrerequisiteController;
 
+
 // --- Curriculum Routes ---
 // Handles all actions related to curriculum management.
 Route::get('/curriculums', [CurriculumController::class, 'index']);

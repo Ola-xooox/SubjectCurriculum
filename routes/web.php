@@ -4,7 +4,7 @@ use App\Http\Controllers\CurriculumController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PrerequisiteController;
 use App\Http\Controllers\SubjectHistoryController;
-
+use App\Http\Controllers\AiController;
 
 Route::get('/', function () {
     return view('dashboard');

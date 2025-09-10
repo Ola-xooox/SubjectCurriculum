@@ -4,36 +4,41 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\ConnectionException;
 
 class AiController extends Controller
 {
     /**
-     * Generates a 15-week topic list for a subject using Google's AI.
+     * Generates a 15-week topic list for a subject using the OpenAI/GitHub model.
      */
     public function generateLessonTopics(Request $request)
     {
-        $validated = $request->validate(['subjectName' => 'required|string|max:255']);
-        $apiKey = env('GOOGLE_API_KEY');
+        $validated = $request->validate([
+            'subjectName' => 'required|string|max:255',
+        ]);
+
+        $apiKey = env('OPENAI_API_KEY');
 
         if (!$apiKey) {
-            return response()->json(['error' => 'Google AI API key is not configured.'], 500);
+            return response()->json(['error' => 'OpenAI API key is not configured.'], 500);
         }
 
         $prompt = "Generate a 15-week list of topics for the subject '{$validated['subjectName']}' suitable for early college-level students. IMPORTANT: The output must be a valid JSON object with keys from 'Week 1' to 'Week 15', and the value for each key should be the topic title as a string. Do not include any text or markdown formatting before or after the JSON object.";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={$apiKey}";
 
         try {
-            $response = Http::post($url, [
-                'contents' => [['parts' => [['text' => $prompt]]]],
-                'generationConfig' => ['responseMimeType' => 'application/json']
+            // Setting a 120-second timeout for this request
+            $response = Http::timeout(120)->withToken($apiKey)->post('https://models.github.ai/inference/chat/completions', [
+                'model' => 'gpt-4o',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'You are a helpful assistant that generates JSON.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
             ]);
 
             if ($response->failed()) {
-                return response()->json(['error' => 'Failed to generate topics from Google AI.', 'details' => $response->json()], $response->status());
+                return response()->json(['error' => 'Failed to generate topics from the AI.', 'details' => $response->json()], $response->status());
             }
 
-            $responseText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+            $responseText = $response->json()['choices'][0]['message']['content'];
             $topics = json_decode($responseText, true);
 
             return response()->json($topics);
@@ -43,7 +48,7 @@ class AiController extends Controller
     }
 
     /**
-     * Generates a detailed lesson plan for a specific topic using Google's AI.
+     * Generates a detailed lesson plan for a specific topic using the OpenAI/GitHub model.
      */
     public function generateLessonPlan(Request $request)
     {
@@ -53,12 +58,13 @@ class AiController extends Controller
             'subjectUnit' => 'required|numeric',
         ]);
 
-        $apiKey = env('GOOGLE_API_KEY');
+        $apiKey = env('OPENAI_API_KEY');
+
         if (!$apiKey) {
-            return response()->json(['error' => 'Google AI API key is not configured.'], 500);
+            return response()->json(['error' => 'OpenAI API key is not configured.'], 500);
         }
-        
-        $duration = $validated['subjectUnit'] * 1; // Assuming 1 unit = 1 hour/week. For a single lesson plan, a good prompt might be to generate content for a single session.
+
+        $duration = $validated['subjectUnit'] * 1; 
 
         $prompt = "Generate a detailed lesson plan for the topic '{$validated['topic']}' in the subject '{$validated['subjectName']}' for early college-level students. The lesson plan should cover a total of {$duration} hours. The response must be a single block of plain text. Do not include any markdown characters like *, #, or ` at the beginning of lines.
 
@@ -83,19 +89,22 @@ Assessment:
 - ...
 
 Ensure that the output is in plain text and strictly follows the structure above without any extra characters.";
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={$apiKey}";
 
         try {
-            $response = Http::post($url, [
-                'contents' => [['parts' => [['text' => $prompt]]]],
-                'generationConfig' => ['responseMimeType' => 'text/plain']
+            // ✨ KEY CHANGE HERE: Increased timeout to 120 seconds ✨
+            $response = Http::timeout(120)->withToken($apiKey)->post('https://models.github.ai/inference/chat/completions', [
+                'model' => 'gpt-4o',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'You are a helpful assistant that generates plain text lesson plans.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
             ]);
 
             if ($response->failed()) {
-                return response()->json(['error' => 'Failed to generate lesson plan from Google AI.', 'details' => $response->json()], $response->status());
+                return response()->json(['error' => 'Failed to generate lesson plan from the AI.', 'details' => $response->json()], $response->status());
             }
 
-            $responseText = $response->json()['candidates'][0]['content']['parts'][0]['text'];
+            $responseText = $response->json()['choices'][0]['message']['content'];
             
             return response()->json(['lessonPlan' => $responseText]);
         } catch (\Exception $e) {
