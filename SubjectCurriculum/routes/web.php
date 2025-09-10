@@ -4,11 +4,11 @@ use App\Http\Controllers\CurriculumController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PrerequisiteController;
 use App\Http\Controllers\SubjectHistoryController;
-use App\Http\Controllers\AiController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', function () {
-    return view('dashboard');
-})->name('dashboard');
+
+Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+Route::get('/', [DashboardController::class, 'dashboard']);
 
 Route::get('/curriculum_builder', function () {
     return view('curriculum_builder');

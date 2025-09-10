@@ -223,7 +223,9 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Notification Modal -->
+    <div id="notification" class="fixed top-6 right-6 z-50 translate-x-[120%] transition-transform duration-500"></div>
 </main>
 
 <script>
@@ -338,6 +340,7 @@
                 const newSubjectCard = createSubjectCard(data.subject);
                 availableSubjectsContainer.prepend(newSubjectCard);
                 hideSubjectModal();
+                showNotification('Subject created successfully!', true);
             })
             .catch(error => {
                 console.error('Error creating subject:', error);
@@ -347,7 +350,7 @@
                 } else if (error.message) {
                     errorMessage = error.message;
                 }
-                alert('Could not create subject:\n\n' + errorMessage);
+                showNotification('Could not create subject:\n' + errorMessage, false);
             });
         });
 
@@ -582,6 +585,7 @@
 
                 // 1. Remove the subject tag from the semester box
                 subjectTagToRemove.remove();
+                showNotification('Subject removed successfully and logged to history!', true);
 
                 // 2. Re-enable the subject card in the "Available Subjects" list
                 const originalSubjectCard = document.getElementById(`subject-${subjectData.subject_code.toLowerCase()}`);
@@ -596,13 +600,10 @@
 
                 // 3. Recalculate and display the new unit totals
                 updateUnitTotals();
-                
-                // You can replace this with a more elegant notification if you have one
-                alert('Subject removed successfully and logged to history!');
 
             } catch (error) {
                 console.error('Error removing subject:', error);
-                alert('Error: ' + error.message);
+                showNotification('Error: ' + error.message, false);
             } finally {
                 // 4. Hide the confirmation modal
                 hideRemoveConfirmationModal();
@@ -808,7 +809,7 @@
         const saveCurriculumButton = document.getElementById('saveCurriculumButton');
         saveCurriculumButton.addEventListener('click', () => {
             const curriculumId = curriculumSelector.value;
-            if (!curriculumId) return alert('Please select a curriculum to save.');
+            if (!curriculumId) return showNotification('Please select a curriculum to save.', false);
             const curriculumData = [];
             document.querySelectorAll('#curriculumOverview .semester-dropzone').forEach(dropzone => {
                 const year = parseInt(dropzone.dataset.year, 10);
@@ -830,10 +831,9 @@
                 return response.json();
             })
             .then(data => {
-                alert('Subject mapping is done! Proceeding to prerequisites.');
-                window.location.href = `/pre_requisite?curriculumId=${curriculumId}`;
+                showNotification('Subject mapping is done! Proceeding to prerequisites.', true, `/pre_requisite?curriculumId=${curriculumId}`);
             })
-            .catch(error => alert('An error occurred while saving.'));
+            .catch(error => showNotification('An error occurred while saving.', false));
         });
 
         const curriculumSelector = document.getElementById('curriculumSelector');
@@ -1001,6 +1001,27 @@
 
         fetchCurriculums();
         fetchAllSubjects();
+
+        // Notification logic
+        const notification = document.getElementById('notification');
+        function showNotification(message, isSuccess = true, redirectUrl = null) {
+            const successIcon = `<svg class=\"w-6 h-6 mr-3\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z\" /></svg>`;
+            const errorIcon = `<svg class=\"w-6 h-6 mr-3\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z\" /></svg>`;
+            const bgColor = isSuccess ? 'bg-emerald-500' : 'bg-rose-500';
+            notification.innerHTML = `
+                <div class=\"flex items-center p-4 rounded-lg shadow-lg text-white ${bgColor}\">
+                    ${isSuccess ? successIcon : errorIcon}
+                    <span class=\"text-sm font-medium\">${message}</span>
+                </div>
+            `;
+            notification.classList.remove('translate-x-[120%]');
+            notification.classList.add('translate-x-0');
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0');
+                notification.classList.add('translate-x-[120%]');
+                if (redirectUrl) window.location.href = redirectUrl;
+            }, 3000);
+        }
     });
 </script>
 @endsection

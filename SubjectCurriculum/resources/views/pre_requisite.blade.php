@@ -96,6 +96,18 @@
     </div>
 </div>
 
+<!-- Success Modal for Prerequisite Save -->
+<div id="successPrereqModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden transition-opacity duration-300 opacity-0">
+    <div class="bg-white p-8 rounded-3xl shadow-xl text-center w-full max-w-sm">
+        <div class="flex justify-center mb-4">
+            <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
+        <p class="text-sm text-gray-600 mb-6">Prerequisites saved successfully!</p>
+        <button id="closeSuccessPrereqModalButton" class="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors">OK</button>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // --- State Management ---
@@ -229,6 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelModalBtn.addEventListener('click', hideModal);
     prerequisiteModal.addEventListener('click', (e) => {
         if (e.target === prerequisiteModal) hideModal();
+    });
+
+    // Success modal logic
+    const successPrereqModal = document.getElementById('successPrereqModal');
+    const closeSuccessPrereqModalButton = document.getElementById('closeSuccessPrereqModalButton');
+    function showSuccessPrereqModal() {
+        successPrereqModal.classList.remove('hidden');
+        setTimeout(() => {
+            successPrereqModal.classList.add('opacity-100');
+        }, 10);
+        setTimeout(hideSuccessPrereqModal, 2000);
+    }
+    function hideSuccessPrereqModal() {
+        successPrereqModal.classList.remove('opacity-100');
+        setTimeout(() => {
+            successPrereqModal.classList.add('hidden');
+        }, 300);
+    }
+    closeSuccessPrereqModalButton.addEventListener('click', hideSuccessPrereqModal);
+    successPrereqModal.addEventListener('click', (e) => {
+        if (e.target === successPrereqModal) hideSuccessPrereqModal();
     });
 
     // --- Data Fetching and UI Rendering ---
@@ -388,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to save prerequisites.');
             }
-            alert('Prerequisites saved successfully!');
+            showSuccessPrereqModal();
             hideModal();
             fetchPrerequisiteData(data.curriculum_id);
         } catch (error) {
