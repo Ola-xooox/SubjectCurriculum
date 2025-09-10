@@ -4,7 +4,8 @@
 <div class="container mx-auto px-6 py-8">
     <h2 class="text-2xl font-semibold text-gray-700">Dashboard</h2>
     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        <a href="{{ route('curriculum_builder') }}?level=Senior High" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-green-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V5a4 4 0 00-8 0v2m8 0v2a4 4 0 01-8 0V7"></path></svg>
             </div>
@@ -13,7 +14,9 @@
                 <p class="text-3xl font-extrabold text-green-700">{{ $seniorHighCount }}</p>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        </a>
+        <a href="{{ route('curriculum_builder') }}?level=College" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-blue-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 7v-7"></path></svg>
             </div>
@@ -22,9 +25,11 @@
                 <p class="text-3xl font-extrabold text-blue-700">{{ $collegeCount }}</p>
             </div>
         </div>
+        </a>
     </div>
     <div class="mt-10 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        <a href="{{ route('subject_mapping') }}" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-purple-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </div>
@@ -33,7 +38,9 @@
                 <p class="text-3xl font-extrabold text-purple-700">{{ $totalSubjects }}</p>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        </a>
+        <a href="{{ route('subject_mapping') }}?type=Major" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-blue-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </div>
@@ -42,7 +49,9 @@
                 <p class="text-3xl font-extrabold text-blue-700">{{ $majorCount }}</p>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        </a>
+        <a href="{{ route('subject_mapping') }}?type=Minor" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-green-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 01-8 0m8 0a4 4 0 00-8 0m8 0V5a4 4 0 00-8 0v2m8 0v2a4 4 0 01-8 0V7"></path></svg>
             </div>
@@ -51,7 +60,9 @@
                 <p class="text-3xl font-extrabold text-green-700">{{ $minorCount }}</p>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-6 flex items-center">
+        </a>
+        <a href="{{ route('subject_mapping') }}?type=Elective" class="block">
+        <div class="bg-white rounded-lg shadow p-6 flex items-center hover:bg-yellow-50 transition">
             <div class="flex-shrink-0 w-14 h-14 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
                 <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01" /></svg>
             </div>
@@ -60,6 +71,7 @@
                 <p class="text-3xl font-extrabold text-yellow-700">{{ $electiveCount }}</p>
             </div>
         </div>
+        </a>
     </div>
     <div class="mt-4 h-96 rounded-lg border-2 border-dashed border-gray-300">
     </div>
