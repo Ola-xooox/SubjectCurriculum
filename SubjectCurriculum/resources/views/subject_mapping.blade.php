@@ -3,26 +3,26 @@
 @section('content')
 <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
     <div class="bg-white rounded-2xl shadow-xl p-8">
-
-        <div class="mb-6 flex justify-between items-center">
-            <div>
+        
+        <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div class="mb-4 sm:mb-0">
                 <h1 class="text-3xl font-bold text-gray-800">Subject Mapping</h1>
-                <p class="text-sm text-gray-500 mt-1">Drag and drop subjects to build the curriculum for a specific course and academic year.</p>
+                <p class="text-sm text-gray-500 mt-1">Drag and drop subjects to build the curriculum.</p>
             </div>
-            <button id="addSubjectButton" class="flex items-center space-x-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors shadow-md">
+            <button id="addSubjectButton" class="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Add New Subject</span>
             </button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+            
             <div class="lg:col-span-1 bg-gray-50 border border-gray-200 rounded-xl p-6 flex flex-col">
                 <div class="pb-4 border-b border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-800">Available Subjects</h2>
                     <p class="text-sm text-gray-500">Find and select subjects to add to the curriculum.</p>
                 </div>
-
+                
                 <div class="flex flex-col sm:flex-row gap-3 my-4">
                     <div class="relative flex-grow">
                         <input type="text" id="searchInput" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Search subject...">
@@ -36,32 +36,36 @@
                     </select>
                 </div>
 
-                {{-- Subject List --}}
                 <div id="availableSubjects" class="flex-1 overflow-y-auto pr-2 -mr-2 space-y-2">
-                    {{-- THIS TEXT WILL BE REPLACED ON PAGE LOAD --}}
                     <p class="text-gray-500 text-center mt-4">Select a curriculum to view subjects.</p>
                 </div>
             </div>
 
             <div class="lg:col-span-2 bg-gray-50 border border-gray-200 rounded-xl p-6 flex flex-col">
-                <div class="pb-4 border-b border-gray-200 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800">Curriculum Overview</h2>
-                    <select id="curriculumSelector" class="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                <div class="pb-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">Curriculum Overview</h2>
+                    <select id="curriculumSelector" class="w-full sm:w-auto border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                         <option value="">Select a Curriculum</option>
-                        {{-- Options will be populated by JavaScript --}}
                     </select>
                 </div>
 
-                <div id="curriculumOverview" class="mt-4 space-y-6 flex-1">
-                    {{-- Dynamically generated content will be placed here --}}
-                    <p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>
+                <div id="grand-total-container" class="hidden mt-4 p-4 bg-blue-100 border border-blue-200 text-blue-800 rounded-lg shadow-inner flex justify-between items-center">
+                    <span class="text-lg font-bold">Total Curriculum Units:</span>
+                    <span id="grand-total-units" class="text-2xl font-extrabold">0</span>
                 </div>
 
-                {{-- Save Button --}}
-                <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end">
-                    <button id="saveCurriculumButton" class="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-md">
+                <div id="curriculumOverview" class="mt-4 space-y-6 flex-1 overflow-y-auto">
+                    <p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end gap-2">
+                    <button id="editCurriculumButton" class="px-6 py-3 rounded-lg text-sm font-semibold text-blue-700 bg-white border border-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-md hidden">
+                        <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg>
+                        Edit
+                    </button>
+                    <button id="saveCurriculumButton" class="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-md" disabled>
                         <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v6a2 2 0 002 2h6m4-4H9m0 0V9m0 0V5a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-3m-4-4V9"></path></svg>
-                        Save Curriculum
+                        Save and Proceed to Prerequisites
                     </button>
                 </div>
             </div>
@@ -72,7 +76,6 @@
     <div id="addSubjectModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-out hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="relative bg-white w-full max-w-6xl rounded-2xl shadow-2xl p-6 md:p-8 transform scale-95 opacity-0 transition-all duration-300 ease-out" id="modal-subject-panel">
-
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-extrabold text-gray-800">Create New Subject</h2>
                     <button id="closeSubjectModalButton" class="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors duration-200" aria-label="Close modal">
@@ -81,7 +84,7 @@
                         </svg>
                     </button>
                 </div>
-
+                
                 <form id="subjectForm" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-1">
@@ -107,7 +110,7 @@
                         <label for="subjectUnit" class="block text-sm font-semibold text-gray-700 mb-1">Unit</label>
                         <input type="number" id="subjectUnit" name="subjectUnit" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
                     </div>
-
+                    
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
                             <h3 class="text-sm font-semibold text-gray-700">Weekly Topics</h3>
@@ -146,13 +149,16 @@
                         @endfor
                     </div>
 
-                    <div class="pt-4 flex justify-end gap-3">
-                        <button type="button" id="cancelSubjectModalButton" class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                            Create
-                        </button>
+                    <div class="pt-4 flex justify-between gap-3">
+                        <div id="createdTimestamp" class="text-sm text-gray-500 self-center"></div>
+                        <div class="flex gap-3">
+                            <button type="button" id="cancelSubjectModalButton" class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                Create
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -171,7 +177,7 @@
                         </svg>
                     </button>
                 </div>
-
+                
                 <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -186,36 +192,43 @@
                             <p class="text-sm font-semibold text-gray-700">Unit:</p>
                             <p id="detailsSubjectUnit" class="text-lg text-gray-900"></p>
                         </div>
+                        <div id="detailsCreatedAtContainer">
+                            <p class="text-sm font-semibold text-gray-700">Created At:</p>
+                            <p id="detailsCreatedAt" class="text-lg text-gray-900"></p>
+                        </div>
                     </div>
                     <div class="space-y-2" id="detailsLessonsContainer">
                         <h3 class="text-md font-bold text-gray-800 pt-4">Lessons</h3>
-                        {{-- Lessons will be populated here --}}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    {{-- Success Alert Modal --}}
-    <div id="successModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-out hidden">
+    
+    {{-- NEW: Confirmation Modal for Subject Removal --}}
+    <div id="removeConfirmationModal" class="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-out hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center transform scale-95 opacity-0 transition-all duration-300 ease-out" id="modal-success-panel">
-                <div class="flex justify-center mb-4">
-                    <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center transform scale-95 opacity-0 transition-all duration-300 ease-out" id="remove-modal-panel">
+                <div class="w-12 h-12 rounded-full bg-red-100 p-2 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
-                <p class="text-sm text-gray-600 mb-6">The subject mapping has been saved successfully.</p>
-                <button id="closeSuccessModalButton" class="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors">
-                    OK
-                </button>
+                <h3 class="text-lg font-semibold text-gray-800">Remove Subject</h3>
+                <p class="text-sm text-gray-500 mt-2">Are you sure you want to remove this subject from the semester?</p>
+                <div class="mt-6 flex justify-center gap-4">
+                    <button id="cancelRemoveButton" class="w-full px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all">Cancel</button>
+                    <button id="confirmRemoveButton" class="w-full px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-all">Yes, Remove</button>
+                </div>
             </div>
         </div>
     </div>
+    
 </main>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Modal and Form Logic for Add Subject ---
+        
         const addSubjectButton = document.getElementById('addSubjectButton');
         const addSubjectModal = document.getElementById('addSubjectModal');
         const closeSubjectModalButton = document.getElementById('closeSubjectModalButton');
@@ -226,8 +239,22 @@
         const generateTopicsButton = document.getElementById('generateTopicsButton');
         const topicSpinner = document.getElementById('topicSpinner');
 
+        const createdTimestamp = document.getElementById('createdTimestamp');
+
         const showSubjectModal = () => {
             addSubjectModal.classList.remove('hidden');
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            };
+            createdTimestamp.textContent = `Created: ${now.toLocaleDateString('en-US', options)}`;
+            
             setTimeout(() => {
                 addSubjectModal.classList.remove('opacity-0');
                 subjectModalPanel.classList.remove('opacity-0', 'scale-95');
@@ -375,6 +402,7 @@
                 const weekTextarea = document.getElementById(`week-${week}-lessons`);
                 const topic = weekTextarea.value;
                 const subjectName = document.getElementById('subjectName').value;
+                const subjectUnit = document.getElementById('subjectUnit').value;
 
                 if (!topic) {
                     alert(`Please enter a topic for Week ${week} or generate topics first.`);
@@ -394,7 +422,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     },
-                    body: JSON.stringify({ subjectName, topic })
+                    body: JSON.stringify({ subjectName, topic, subjectUnit })
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -403,18 +431,11 @@
                     return response.json();
                 })
                 .then(data => {
-                    const objectives = data.learning_objectives.map(obj => `- ${obj.objective}: ${obj.description}`).join('\n');
-                    let tableContent = 'Lesson Plan:\n' + '--------------------------------------------------\n';
-                    if (data.lesson_plan_table && Array.isArray(data.lesson_plan_table)) {
-                        data.lesson_plan_table.forEach(row => {
-                            tableContent += `Activity: ${row.activity || 'N/A'}\n`;
-                            tableContent += `Description: ${row.description || 'N/A'}\n`;
-                            tableContent += `Duration (mins): ${row.duration_minutes || 'N/A'}\n`;
-                            tableContent += '--------------------------------------------------\n';
-                        });
+                    if (data.lessonPlan) {
+                        weekTextarea.value = data.lessonPlan;
+                    } else {
+                        weekTextarea.value = 'Could not generate a detailed lesson plan. Please try again.';
                     }
-                    const lessonContent = data.detailed_lesson_content || 'No detailed lesson content was generated.';
-                    weekTextarea.value = `Topic: ${data.topic}\n\n` + `Learning Objectives:\n${objectives}\n\n` + `${tableContent}\n` + `Detailed Lesson:\n${lessonContent}\n\n` + `Assessment:\n${data.assessment}`;
                 })
                 .catch(error => {
                     console.error('Error generating detailed lesson:', error);
@@ -455,6 +476,19 @@
             document.getElementById('detailsSubjectCode').textContent = data.subject_code;
             document.getElementById('detailsSubjectType').textContent = data.subject_type;
             document.getElementById('detailsSubjectUnit').textContent = data.subject_unit;
+            if (data.created_at) {
+                const date = new Date(data.created_at);
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                };
+                document.getElementById('detailsCreatedAt').textContent = date.toLocaleDateString('en-US', options);
+            }
             const lessonsContainer = document.getElementById('detailsLessonsContainer');
             lessonsContainer.innerHTML = '<h3 class="text-md font-bold text-gray-800 pt-4">Lessons</h3>';
             if (data.lessons && Object.keys(data.lessons).length > 0) {
@@ -482,8 +516,108 @@
         subjectDetailsModal.addEventListener('click', (e) => { if (e.target.id === 'subjectDetailsModal') hideDetailsModal(); });
 
         let draggedItem = null;
+        let subjectTagToRemove = null;
+        
+        const removeConfirmationModal = document.getElementById('removeConfirmationModal');
+        const removeModalPanel = document.getElementById('remove-modal-panel');
+        const cancelRemoveButton = document.getElementById('cancelRemoveButton');
+        const confirmRemoveButton = document.getElementById('confirmRemoveButton');
+
+        const showRemoveConfirmationModal = () => {
+            removeConfirmationModal.classList.remove('hidden');
+            setTimeout(() => {
+                removeConfirmationModal.classList.remove('opacity-0');
+                removeModalPanel.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+        };
+
+        const hideRemoveConfirmationModal = () => {
+            removeConfirmationModal.classList.add('opacity-0');
+            removeModalPanel.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                removeConfirmationModal.classList.add('hidden');
+                subjectTagToRemove = null;
+            }, 300);
+        };
+
+        cancelRemoveButton.addEventListener('click', hideRemoveConfirmationModal);
+        
+        // =================================================================
+        // == ✨ UPDATED CODE BLOCK STARTS HERE ✨ ==
+        // =================================================================
+        confirmRemoveButton.addEventListener('click', async () => {
+            if (!subjectTagToRemove) return;
+
+            // Get all necessary data from the subject tag and its container
+            const subjectData = JSON.parse(subjectTagToRemove.dataset.subjectData);
+            const curriculumId = curriculumSelector.value;
+            const dropzone = subjectTagToRemove.closest('.semester-dropzone');
+            const year = dropzone.dataset.year;
+            const semester = dropzone.dataset.semester;
+
+            try {
+                // Call the new API endpoint to remove and log the subject
+                const response = await fetch('/api/curriculum/remove-subject', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        curriculumId: curriculumId,
+                        subjectId: subjectData.id, // Use the subject's primary ID
+                        year: year,
+                        semester: semester
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to remove the subject.');
+                }
+
+                // --- On Success, Update the UI ---
+
+                // 1. Remove the subject tag from the semester box
+                subjectTagToRemove.remove();
+
+                // 2. Re-enable the subject card in the "Available Subjects" list
+                const originalSubjectCard = document.getElementById(`subject-${subjectData.subject_code.toLowerCase()}`);
+                if (originalSubjectCard) {
+                    originalSubjectCard.classList.remove('opacity-50', 'cursor-not-allowed', 'mapped-subject-card');
+                    originalSubjectCard.setAttribute('draggable', 'true');
+                    const statusIndicator = originalSubjectCard.querySelector('div:last-child');
+                    if(statusIndicator) {
+                        statusIndicator.innerHTML = `<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
+                    }
+                }
+
+                // 3. Recalculate and display the new unit totals
+                updateUnitTotals();
+                
+                // You can replace this with a more elegant notification if you have one
+                alert('Subject removed successfully and logged to history!');
+
+            } catch (error) {
+                console.error('Error removing subject:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                // 4. Hide the confirmation modal
+                hideRemoveConfirmationModal();
+            }
+        });
+        // =================================================================
+        // == ✨ UPDATED CODE BLOCK ENDS HERE ✨ ==
+        // =================================================================
+        
         const addDraggableEvents = (item) => {
             item.addEventListener('dragstart', (e) => {
+                if (!isEditing) {
+                    e.preventDefault();
+                    return;
+                }
                 draggedItem = item;
                 e.dataTransfer.setData('text/plain', item.dataset.subjectData);
                 setTimeout(() => item.classList.add('opacity-50', 'bg-gray-200'), 0);
@@ -496,61 +630,181 @@
         const addDoubleClickEvents = (item) => {
             item.addEventListener('dblclick', () => showDetailsModal(JSON.parse(item.dataset.subjectData)));
         };
-        const createSubjectCard = (subject) => {
+
+        const createSubjectCard = (subject, isMapped = false) => {
             const newSubjectCard = document.createElement('div');
             newSubjectCard.id = `subject-${subject.subject_code.toLowerCase()}`;
-            newSubjectCard.className = 'subject-card flex items-center justify-between p-3 bg-white hover:bg-blue-50 border border-gray-200 rounded-lg cursor-grab transition';
-            newSubjectCard.setAttribute('draggable', 'true');
+            newSubjectCard.className = `subject-card flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg transition-all ${isMapped ? 'opacity-50 cursor-not-allowed mapped-subject-card' : 'hover:bg-blue-50 cursor-grab'}`;
+            newSubjectCard.setAttribute('draggable', !isMapped);
             newSubjectCard.dataset.subjectData = JSON.stringify(subject);
-            newSubjectCard.innerHTML = `<div><p class="font-semibold text-gray-700">${subject.subject_code}</p><p class="text-xs text-gray-500">${subject.subject_name}</p></div><div class="flex items-center space-x-2"><button class="delete-subject-btn text-gray-400 hover:text-red-500 transition-colors duration-200" aria-label="Delete subject"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
+            newSubjectCard.innerHTML = `<div><p class="font-semibold text-gray-700">${subject.subject_name}</p><p class="text-xs text-gray-500">${subject.subject_code}</p><p class="text-xs text-gray-500">Unit: ${subject.subject_unit}</p></div><div class="flex items-center space-x-2">${isMapped ? '<span class="text-xs font-semibold text-blue-500 bg-blue-100 px-2 py-1 rounded-full">In Use</span>' : '<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>'}</div>`;
             addDraggableEvents(newSubjectCard);
             addDoubleClickEvents(newSubjectCard);
-            addDeleteButtonEvents(newSubjectCard);
             return newSubjectCard;
         };
-        const addDeleteButtonEvents = (item) => {
-            const deleteBtn = item.querySelector('.delete-subject-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    item.remove();
+
+        const createSubjectTag = (subjectData, isEditing = false) => {
+            const subjectTag = document.createElement('div');
+            subjectTag.className = 'subject-tag bg-white border border-gray-300 shadow-sm rounded-lg p-2 flex items-center justify-between w-full transition-all hover:shadow-md hover:border-blue-500';
+            subjectTag.setAttribute('draggable', isEditing);
+            subjectTag.dataset.subjectData = JSON.stringify(subjectData);
+
+            let typeColorClass = 'bg-gray-400';
+            switch (subjectData.subject_type) {
+                case 'Major': typeColorClass = 'bg-blue-500'; break;
+                case 'Minor': typeColorClass = 'bg-green-500'; break;
+                case 'Elective': typeColorClass = 'bg-yellow-500'; break;
+            }
+
+            subjectTag.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-2 rounded-full ${typeColorClass}"></span>
+                    <div>
+                        <p class="font-bold text-sm text-gray-800">${subjectData.subject_code}</p>
+                        <p class="text-xs text-gray-600">${subjectData.subject_name}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-gray-700">${subjectData.subject_unit} units</span>
+                    <button class="delete-subject-tag ${isEditing ? '' : 'hidden'} text-gray-400 hover:text-red-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `;
+            
+            subjectTag.querySelector('.delete-subject-tag').onclick = (e) => {
+                e.stopPropagation();
+                subjectTagToRemove = subjectTag;
+                showRemoveConfirmationModal();
+            };
+
+            addDraggableEvents(subjectTag);
+            addDoubleClickEvents(subjectTag);
+            return subjectTag;
+        };
+        
+        const updateUnitTotals = () => {
+            let grandTotal = 0;
+            const curriculumId = curriculumSelector.value;
+            const grandTotalContainer = document.getElementById('grand-total-container');
+
+            if (!curriculumId) {
+                grandTotalContainer.classList.add('hidden');
+                return;
+            }
+
+            document.querySelectorAll('.semester-dropzone').forEach(dropzone => {
+                let semesterTotal = 0;
+                dropzone.querySelectorAll('.subject-tag').forEach(tag => {
+                    const subjectData = JSON.parse(tag.dataset.subjectData);
+                    semesterTotal += parseInt(subjectData.subject_unit, 10) || 0;
                 });
+                dropzone.querySelector('.semester-unit-total').textContent = `Units: ${semesterTotal}`;
+                grandTotal += semesterTotal;
+            });
+            
+            const grandTotalSpan = document.getElementById('grand-total-units');
+            grandTotalSpan.textContent = grandTotal;
+            grandTotalContainer.classList.remove('hidden');
+        };
+        
+        let isEditing = false;
+        const toggleEditMode = (enableEdit) => {
+            isEditing = enableEdit;
+            const dropzones = document.querySelectorAll('.semester-dropzone');
+            const deleteButtons = document.querySelectorAll('.delete-subject-tag');
+            const saveButton = document.getElementById('saveCurriculumButton');
+            const editButton = document.getElementById('editCurriculumButton');
+
+            if (isEditing) {
+                dropzones.forEach(dropzone => {
+                    dropzone.classList.remove('locked');
+                    addDragAndDropListeners(dropzone);
+                });
+                deleteButtons.forEach(button => button.classList.remove('hidden'));
+                saveButton.removeAttribute('disabled');
+                editButton.innerHTML = `<svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Cancel`;
+            } else {
+                dropzones.forEach(dropzone => {
+                    dropzone.classList.add('locked');
+                    removeDragAndDropListeners(dropzone);
+                });
+                deleteButtons.forEach(button => button.classList.add('hidden'));
+                saveButton.setAttribute('disabled', 'disabled');
+                editButton.innerHTML = `<svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg> Edit`;
             }
         };
+
+        const addDragAndDropListeners = (dropzone) => {
+            dropzone.addEventListener('dragover', dragOverHandler);
+            dropzone.addEventListener('dragleave', dragLeaveHandler);
+            dropzone.addEventListener('drop', dropHandler);
+        };
+        
+        const removeDragAndDropListeners = (dropzone) => {
+            dropzone.removeEventListener('dragover', dragOverHandler);
+            dropzone.removeEventListener('dragleave', dragLeaveHandler);
+            dropzone.removeEventListener('drop', dropHandler);
+        };
+
+        const dragOverHandler = (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
+        };
+
+        const dragLeaveHandler = (e) => {
+            e.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+        };
+
+        const dropHandler = (e) => {
+            e.preventDefault();
+            const dropzone = e.currentTarget;
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+            if (!draggedItem) return;
+            
+            const droppedSubjectData = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const targetContainer = dropzone.querySelector('.flex-wrap');
+            
+            const isDuplicateInSameSemester = Array.from(targetContainer.querySelectorAll('.subject-tag')).some(tag => JSON.parse(tag.dataset.subjectData).subject_code === droppedSubjectData.subject_code);
+            
+            if (!isDuplicateInSameSemester) {
+                if (draggedItem.classList.contains('subject-card')) {
+                    const subjectTag = createSubjectTag(droppedSubjectData, isEditing);
+                    targetContainer.appendChild(subjectTag);
+                    draggedItem.classList.add('opacity-50', 'cursor-not-allowed', 'mapped-subject-card');
+                    draggedItem.setAttribute('draggable', 'false');
+                } else if (draggedItem.classList.contains('subject-tag')) {
+                    draggedItem.parentNode.removeChild(draggedItem);
+                    const subjectTag = createSubjectTag(droppedSubjectData, isEditing);
+                    targetContainer.appendChild(subjectTag);
+                }
+                updateUnitTotals();
+            }
+        };
+        
         const initDragAndDrop = () => {
             document.querySelectorAll('.semester-dropzone').forEach(dropzone => {
-                dropzone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.add('border-blue-500', 'bg-blue-50');
-                });
-                dropzone.addEventListener('dragleave', () => dropzone.classList.remove('border-blue-500', 'bg-blue-50'));
-                dropzone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.remove('border-blue-500', 'bg-blue-50');
-                    if (!draggedItem) return;
-                    const droppedSubjectData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                    const isDuplicate = Array.from(dropzone.querySelectorAll('.subject-tag')).some(tag => JSON.parse(tag.dataset.subjectData).subject_code === droppedSubjectData.subject_code);
-                    if (!isDuplicate) {
-                        const subjectTag = document.createElement('div');
-                        subjectTag.className = 'subject-tag bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full cursor-grab';
-                        subjectTag.textContent = droppedSubjectData.subject_code;
-                        subjectTag.setAttribute('draggable', 'true');
-                        subjectTag.dataset.subjectData = JSON.stringify(droppedSubjectData);
-                        addDraggableEvents(subjectTag);
-                        addDoubleClickEvents(subjectTag);
-                        dropzone.querySelector('.flex-wrap').appendChild(subjectTag);
-                    }
-                });
+                addDragAndDropListeners(dropzone);
             });
-            const mainContentArea = document.querySelector('main');
-            mainContentArea.addEventListener('dragover', e => e.preventDefault());
-            mainContentArea.addEventListener('drop', e => {
-                if (draggedItem && draggedItem.classList.contains('subject-tag') && !e.target.closest('.semester-dropzone')) {
+
+            document.body.addEventListener('dragover', e => e.preventDefault());
+            document.body.addEventListener('drop', e => {
+                e.preventDefault();
+                if (isEditing && draggedItem && draggedItem.classList.contains('subject-tag') && !e.target.closest('.semester-dropzone')) {
+                    const subjectData = JSON.parse(draggedItem.dataset.subjectData);
+                    const originalSubjectCard = document.getElementById(`subject-${subjectData.subject_code.toLowerCase()}`);
+                    if (originalSubjectCard) {
+                        originalSubjectCard.classList.remove('opacity-50', 'cursor-not-allowed', 'mapped-subject-card');
+                        originalSubjectCard.setAttribute('draggable', 'true');
+                    }
                     draggedItem.remove();
+                    updateUnitTotals();
                 }
             });
         };
-
+        
+        document.getElementById('editCurriculumButton').addEventListener('click', () => toggleEditMode(!isEditing));
+        
         const saveCurriculumButton = document.getElementById('saveCurriculumButton');
         saveCurriculumButton.addEventListener('click', () => {
             const curriculumId = curriculumSelector.value;
@@ -576,12 +830,11 @@
                 return response.json();
             })
             .then(data => {
-                // Redirect to pre_requisite page with curriculumId
+                alert('Subject mapping is done! Proceeding to prerequisites.');
                 window.location.href = `/pre_requisite?curriculumId=${curriculumId}`;
             })
             .catch(error => alert('An error occurred while saving.'));
         });
-
 
         const curriculumSelector = document.getElementById('curriculumSelector');
         const curriculumOverview = document.getElementById('curriculumOverview');
@@ -592,16 +845,17 @@
                 .then(curriculums => {
                     curriculumSelector.innerHTML = '<option value="">Select a Curriculum</option>';
                     curriculums.forEach(curriculum => {
-                        const option = document.createElement('option');
-                        option.value = curriculum.id;
-                        option.textContent = curriculum.name;
+                        const optionText = `${curriculum.year_level}: ${curriculum.program_code} ${curriculum.curriculum_name} (${curriculum.academic_year})`;
+                        const option = new Option(optionText, curriculum.id);
+                        option.dataset.yearLevel = curriculum.year_level;
+                        option.dataset.academicYear = curriculum.academic_year;
                         curriculumSelector.appendChild(option);
                     });
                     const urlParams = new URLSearchParams(window.location.search);
                     const newCurriculumId = urlParams.get('curriculumId');
                     if (newCurriculumId) {
                         curriculumSelector.value = newCurriculumId;
-                        fetchCurriculumData(newCurriculumId);
+                        setTimeout(() => fetchCurriculumData(newCurriculumId), 100);
                     }
                 });
         }
@@ -612,57 +866,124 @@
                 fetchCurriculumData(curriculumId);
             } else {
                 curriculumOverview.innerHTML = '<p class="text-gray-500 text-center mt-4">Select a curriculum from the dropdown to start mapping subjects.</p>';
-                fetchAllSubjects();
+                availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">Select a curriculum to view subjects.</p>';
+                updateUnitTotals();
+                document.getElementById('editCurriculumButton').classList.add('hidden');
+                toggleEditMode(false);
             }
         });
-
+        
         function fetchCurriculumData(id) {
+            const selectedOption = curriculumSelector.querySelector(`option[value="${id}"]`);
+            if (!selectedOption || !selectedOption.dataset.yearLevel) {
+                curriculumOverview.innerHTML = '<p class="text-red-500 text-center mt-4">Could not determine year level. Please reload.</p>';
+                return;
+            }
+
+            const yearLevel = selectedOption.dataset.yearLevel;
+            renderCurriculumOverview(yearLevel);
+
             fetch(`/api/curriculums/${id}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    renderCurriculumOverview(data.curriculum.year_level);
-                    renderAvailableSubjects(data.allSubjects);
+                    if (!data || !data.curriculum || !data.allSubjects) {
+                        throw new Error('Invalid data structure from server.');
+                    }
+                    renderAvailableSubjects(data.allSubjects, data.curriculum.subjects);
                     populateMappedSubjects(data.curriculum.subjects);
+                    
+                    const hasMappedSubjects = data.curriculum.subjects.length > 0;
+                    
+                    if (hasMappedSubjects) {
+                        toggleEditMode(false);
+                        document.getElementById('editCurriculumButton').classList.remove('hidden');
+                    } else {
+                        toggleEditMode(true);
+                        document.getElementById('editCurriculumButton').classList.add('hidden');
+                    }
+                    
+                    document.getElementById('editCurriculumButton').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching curriculum data:', error);
+                    availableSubjectsContainer.innerHTML = '<p class="text-red-500 text-center mt-4">Could not load subjects.</p>';
                 });
         }
 
         function renderCurriculumOverview(yearLevel) {
             let html = '';
-            const maxYear = parseInt(yearLevel, 10);
+            const isSeniorHigh = yearLevel === 'Senior High';
+            const maxYear = isSeniorHigh ? 2 : 4;
+
+            const getYearSuffix = (year) => {
+                if (year === 1) return 'st';
+                if (year === 2) return 'nd';
+                if (year === 3) return 'rd';
+                return 'th';
+            };
+
             for (let i = 1; i <= maxYear; i++) {
-                const yearTitle = i === 1 ? '1st Year' : (i === 2 ? '2nd Year' : (i === 3 ? '3rd Year' : '4th Year'));
-                html += `<div><h3 class="text-lg font-semibold text-gray-700 mb-3">${yearTitle}</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="1"><h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">First Semester</h4><div class="flex flex-wrap gap-2"></div></div><div class="semester-dropzone bg-white border border-gray-200 rounded-lg p-4 min-h-[100px] hover:border-blue-500 transition-colors" data-year="${i}" data-semester="2"><h4 class="font-semibold text-gray-600 border-b border-gray-200 pb-2 mb-3">Second Semester</h4><div class="flex flex-wrap gap-2"></div></div></div></div>`;
+                const yearTitle = `${i}${getYearSuffix(i)} Year`;
+                html += `
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">${yearTitle}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="semester-dropzone bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 transition-colors" data-year="${i}" data-semester="1">
+                                <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
+                                    <h4 class="font-semibold text-gray-600">First Semester</h4>
+                                    <div class="semester-unit-total text-sm font-bold text-gray-700">Units: 0</div>
+                                </div>
+                                <div class="flex-wrap space-y-2 min-h-[80px]"></div>
+                            </div>
+                            <div class="semester-dropzone bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 transition-colors" data-year="${i}" data-semester="2">
+                                <div class="flex justify-between items-center border-b border-gray-200 pb-2 mb-3">
+                                    <h4 class="font-semibold text-gray-600">Second Semester</h4>
+                                    <div class="semester-unit-total text-sm font-bold text-gray-700">Units: 0</div>
+                                </div>
+                                <div class="flex-wrap space-y-2 min-h-[80px]"></div>
+                            </div>
+                        </div>
+                    </div>`;
             }
             curriculumOverview.innerHTML = html;
             initDragAndDrop();
         }
 
-        function renderAvailableSubjects(subjects) {
+        function renderAvailableSubjects(subjects, mappedSubjects = []) {
             availableSubjectsContainer.innerHTML = '';
+            const mappedSubjectCodes = new Set(mappedSubjects.map(s => s.subject_code));
+
             if (subjects.length === 0) {
-                availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">No subjects found. Use the "Add New Subject" button to create some.</p>';
+                availableSubjectsContainer.innerHTML = '<p class="text-gray-500 text-center mt-4">No available subjects found.</p>';
             } else {
                 subjects.forEach(subject => {
-                    const newSubjectCard = createSubjectCard(subject);
+                    const isMapped = mappedSubjectCodes.has(subject.subject_code);
+                    const newSubjectCard = createSubjectCard(subject, isMapped);
                     availableSubjectsContainer.appendChild(newSubjectCard);
                 });
             }
         }
 
         function populateMappedSubjects(subjects) {
+            if (!subjects) {
+                updateUnitTotals();
+                return;
+            };
+            document.querySelectorAll('.semester-dropzone .flex-wrap').forEach(el => el.innerHTML = '');
+
             subjects.forEach(subject => {
                 const dropzone = document.querySelector(`#curriculumOverview .semester-dropzone[data-year="${subject.pivot.year}"][data-semester="${subject.pivot.semester}"] .flex-wrap`);
                 if (dropzone) {
-                    const subjectTag = document.createElement('div');
-                    subjectTag.className = 'subject-tag bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full cursor-grab';
-                    subjectTag.textContent = subject.subject_code;
-                    subjectTag.setAttribute('draggable', 'true');
-                    subjectTag.dataset.subjectData = JSON.stringify(subject);
-                    addDraggableEvents(subjectTag);
-                    addDoubleClickEvents(subjectTag);
+                    const subjectTag = createSubjectTag(subject, isEditing);
                     dropzone.appendChild(subjectTag);
                 }
             });
+            updateUnitTotals();
         }
 
         function fetchAllSubjects() {

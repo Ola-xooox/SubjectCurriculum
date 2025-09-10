@@ -6,20 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('curriculums', function (Blueprint $table) {
             $table->id();
-            $table->string('curriculum_name');
-            $table->string('curriculum_code')->unique();
+            $table->string('curriculum');
+            $table->string('program_code')->unique();
             $table->string('academic_year');
-            $table->unsignedInteger('year_level'); // To store the highest year level (e.g., 2 or 4)
+            $table->string('year_level'); // Can be 'Senior High' or 'College'
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('curriculums');
     }
 };
+
