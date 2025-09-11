@@ -17,10 +17,11 @@
                     <div>
                         <label for="subject-select" class="block text-sm font-medium text-gray-700">Subject/Course</label>
                         <select id="subject-select" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="COMPROG1">Computer Programming 1 - COMPROG1</option>
-                            <option value="DBMS101">Database Management System - DBMS101</option>
-                            <option value="OOP201">Object-Oriented Programming - OOP201</option>
+                          
                         </select>
+                    </div>
+                    <div>
+                        <button id="add-grade-btn" class="w-full bg-[#1e3a8a] hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition duration-300">Save Weights</button>
                     </div>
                 </div>
             </div>
@@ -258,6 +259,78 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 gradeEntry.style.display = 'none';
             }
+        });
+    });
+
+    // Function to fetch weights for selected subject
+    function fetchWeights(subjectCode) {
+        fetch(`/api/grade-weights/${subjectCode}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.aae !== undefined) aaeInput.value = data.aae;
+                if (data && data.evaluation !== undefined) evaluationInput.value = data.evaluation;
+                if (data && data.assignment !== undefined) assignmentInput.value = data.assignment;
+                if (data && data.exam !== undefined) examInput.value = data.exam;
+                updateTotalWeight();
+            })
+            .catch(() => {
+                // If not found, reset to default
+                aaeInput.value = 20;
+                evaluationInput.value = 20;
+                assignmentInput.value = 20;
+                examInput.value = 40;
+                updateTotalWeight();
+            });
+    }
+
+    // Populate subject dropdown with all subjects from backend
+    fetch('/api/subjects')
+        .then(response => response.json())
+        .then(subjects => {
+            subjectSelect.innerHTML = '';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.subject_code;
+                option.textContent = `${subject.subject_name} - ${subject.subject_code}`;
+                subjectSelect.appendChild(option);
+            });
+            // Trigger change event to load weights for first subject
+            if (subjects.length > 0) {
+                subjectSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+    // Fetch weights when subject changes
+    subjectSelect.addEventListener('change', function() {
+        fetchWeights(this.value);
+    });
+    // Initial fetch
+    fetchWeights(subjectSelect.value);
+
+    // Save weights for selected subject
+    document.getElementById('save-weights-btn').addEventListener('click', function() {
+        const subjectCode = subjectSelect.value;
+        const payload = {
+            aae: parseFloat(aaeInput.value) || 0,
+            evaluation: parseFloat(evaluationInput.value) || 0,
+            assignment: parseFloat(assignmentInput.value) || 0,
+            exam: parseFloat(examInput.value) || 0
+        };
+        fetch(`/api/grade-weights/${subjectCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Weights saved successfully!');
+        })
+        .catch(() => {
+            alert('Failed to save weights.');
         });
     });
 
